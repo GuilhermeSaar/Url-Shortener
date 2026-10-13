@@ -19,8 +19,5 @@ public class UrlShortenerApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        String urlshorten = service.createShortenUrl("https://www.pokerstars.com/pt-BR/");
-
-        System.out.println(urlshorten);
     }
 }

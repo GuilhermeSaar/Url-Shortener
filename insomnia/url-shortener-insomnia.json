@@ -1,0 +1,209 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-13T12:00:00.000Z",
+  "__export_source": "insomnia.desktop.app",
+  "resources": [
+    {
+      "_id": "wrk_urlshortener_tests",
+      "parentId": null,
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "name": "URL Shortener - Testes da API",
+      "description": "Testes manuais da rota de encurtamento implementada no projeto.",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "fld_shorten_tests",
+      "parentId": "wrk_urlshortener_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "name": "POST /urls/shorten",
+      "description": "Um sucesso e quatro entradas inválidas para validar o endpoint atual.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1791892800000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_shorten_valid",
+      "parentId": "fld_shorten_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "url": "http://localhost:8080/urls/shorten",
+      "name": "01 - Encurtar URL válida (espera 200 e código de 6 caracteres)",
+      "description": "Envia uma URL HTTPS e valida o status e o formato do código retornado em texto puro.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"url\": \"https://example.com/minha-pagina\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "text/plain"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('responde HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('retorna código Base62 com exatamente 6 caracteres', () => {\n  insomnia.expect(insomnia.response.text().trim()).to.match(/^[a-zA-Z0-9]{6}$/);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_shorten_blank",
+      "parentId": "fld_shorten_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "url": "http://localhost:8080/urls/shorten",
+      "name": "02 - URL vazia (espera 400)",
+      "description": "Verifica a validação @NotBlank.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"url\": \"\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('rejeita URL vazia com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_shorten_missing",
+      "parentId": "fld_shorten_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "url": "http://localhost:8080/urls/shorten",
+      "name": "03 - Campo url ausente (espera 400)",
+      "description": "Verifica a validação quando a propriedade obrigatória não é enviada.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('rejeita propriedade ausente com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_shorten_ftp",
+      "parentId": "fld_shorten_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "url": "http://localhost:8080/urls/shorten",
+      "name": "04 - Protocolo FTP (espera 400)",
+      "description": "Verifica que apenas URLs HTTP e HTTPS sejam aceitas.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"url\": \"ftp://example.com/arquivo\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('rejeita protocolo diferente de HTTP/HTTPS com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_shorten_malformed",
+      "parentId": "fld_shorten_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "url": "http://localhost:8080/urls/shorten",
+      "name": "05 - URL malformada (espera 400)",
+      "description": "Verifica a validação de formato da URL.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"url\": \"https://\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('rejeita URL malformada com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    }
+  ]
+}
