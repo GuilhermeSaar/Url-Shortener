@@ -25,7 +25,7 @@ public class UrlModel {
     private String code;
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String url;
+    private String urlOriginal;
 
     @Column(nullable = false)
     private Long clickCount;
@@ -33,5 +33,4 @@ public class UrlModel {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
 }

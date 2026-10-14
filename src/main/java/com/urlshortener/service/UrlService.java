@@ -1,5 +1,6 @@
 package com.urlshortener.service;
 
+import com.urlshortener.exception.UrlNotFoundException;
 import com.urlshortener.model.UrlModel;
 import com.urlshortener.repository.UrlRepository;
 import lombok.AllArgsConstructor;
@@ -14,23 +15,32 @@ import java.util.List;
 public class UrlService {
 
     private final Sqids sqids;
-    private final UrlRepository urlRepository;
-
+    private final UrlRepository repository;
 
     @Transactional
     public String createShortenUrl(String longUrl) {
 
         var urlModel = new UrlModel();
-        urlModel.setUrl(longUrl);
+        urlModel.setUrlOriginal(longUrl);
         urlModel.setClickCount(0L);
 
-        urlRepository.save(urlModel);
+        repository.save(urlModel);
 
         String code = sqids.encode(List.of(urlModel.getId()));
 
         urlModel.setCode(code);
-        urlRepository.save(urlModel);
+        repository.save(urlModel);
 
         return code;
+    }
+
+    @Transactional(readOnly = true)
+    public String findUrlOriginalByCode(String code) {
+
+        var urlLong = repository.findByCode(code).orElseThrow(
+                () -> new UrlNotFoundException("URL não encontrada")
+        );
+
+        return urlLong.getUrlOriginal();
     }
 }

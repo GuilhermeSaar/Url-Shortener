@@ -4,15 +4,15 @@ import com.urlshortener.controller.dto.UrlRequest;
 import com.urlshortener.service.UrlService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
-@RequestMapping(value = "/urls")
 @AllArgsConstructor
 public class ShortenUrlController {
 
@@ -22,6 +22,23 @@ public class ShortenUrlController {
     public ResponseEntity<String> shortenUrl(@Valid @RequestBody UrlRequest request) {
 
         String shortCode = service.createShortenUrl(request.url());
-        return ResponseEntity.status(HttpStatus.OK).body(shortCode);
+        String longUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/{code}")
+                .buildAndExpand(shortCode)
+                .toUriString();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(longUrl);
+    }
+
+    @GetMapping("/{shortCode}")
+    public ResponseEntity<Void> redirectToOriginalUrl(@PathVariable String shortCode) {
+
+        HttpHeaders headers = new HttpHeaders();
+
+        var originalUrl = service.findUrlOriginalByCode(shortCode);
+
+        headers.setLocation(URI.create(originalUrl));
+
+        return ResponseEntity.status(HttpStatus.FOUND).headers(headers).build();
     }
 }

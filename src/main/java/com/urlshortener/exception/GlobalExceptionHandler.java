@@ -17,6 +17,23 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler({UrlNotFoundException.class})
+    public ResponseEntity<ResponseError> urlNotFoundException(UrlNotFoundException ex, HttpServletRequest request) {
+
+        HttpStatus status = HttpStatus.NOT_FOUND;
+
+        var response = new ResponseError(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                request.getRequestURI(),
+                List.of(new FieldErrors("shortcode", ex.getMessage()))
+        );
+
+        return ResponseEntity.status(status).body(response);
+    }
+
+
     @ExceptionHandler({MethodArgumentNotValidException.class})
     public ResponseEntity<ResponseError> validationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
 
@@ -24,10 +41,10 @@ public class GlobalExceptionHandler {
 
         List<FieldErrors> errors = new ArrayList<>();
 
-        for (FieldError er : ex.getBindingResult().getFieldErrors()) {
+        for (FieldError err : ex.getBindingResult().getFieldErrors()) {
 
-            String field = er.getField();
-            String error =  er.getDefaultMessage();
+            String field = err.getField();
+            String error =  err.getDefaultMessage();
 
             errors.add(new FieldErrors(field, error));
         }

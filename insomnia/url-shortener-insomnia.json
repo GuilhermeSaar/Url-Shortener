@@ -19,7 +19,7 @@
       "parentId": "wrk_urlshortener_tests",
       "modified": 1791892800000,
       "created": 1791892800000,
-      "name": "POST /urls/shorten",
+      "name": "POST /shorten",
       "description": "Um sucesso e quatro entradas inválidas para validar o endpoint atual.",
       "environment": {},
       "environmentPropertyOrder": null,
@@ -31,9 +31,9 @@
       "parentId": "fld_shorten_tests",
       "modified": 1791892800000,
       "created": 1791892800000,
-      "url": "http://localhost:8080/urls/shorten",
-      "name": "01 - Encurtar URL válida (espera 200 e código de 6 caracteres)",
-      "description": "Envia uma URL HTTPS e valida o status e o formato do código retornado em texto puro.",
+      "url": "http://localhost:8080/shorten",
+      "name": "01 - Encurtar URL válida (espera 201 e URL curta)",
+      "description": "Envia uma URL HTTPS e valida a URL curta retornada.",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
@@ -51,7 +51,7 @@
       ],
       "authentication": {},
       "scripts": {
-        "afterResponse": "insomnia.test('responde HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('retorna código Base62 com exatamente 6 caracteres', () => {\n  insomnia.expect(insomnia.response.text().trim()).to.match(/^[a-zA-Z0-9]{6}$/);\n});"
+        "afterResponse": "const shortUrl = insomnia.response.text().trim();\n\ninsomnia.test('responde HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('retorna URL curta com código Base62 de 6 caracteres', () => {\n  insomnia.expect(shortUrl).to.match(/^https?:\\/\\/[^/]+\\/[a-zA-Z0-9]{6}$/);\n});"
       },
       "settings": {
         "renderRequestBody": true,
@@ -70,7 +70,7 @@
       "parentId": "fld_shorten_tests",
       "modified": 1791892800000,
       "created": 1791892800000,
-      "url": "http://localhost:8080/urls/shorten",
+      "url": "http://localhost:8080/shorten",
       "name": "02 - URL vazia (espera 400)",
       "description": "Verifica a validação @NotBlank.",
       "method": "POST",
@@ -105,7 +105,7 @@
       "parentId": "fld_shorten_tests",
       "modified": 1791892800000,
       "created": 1791892800000,
-      "url": "http://localhost:8080/urls/shorten",
+      "url": "http://localhost:8080/shorten",
       "name": "03 - Campo url ausente (espera 400)",
       "description": "Verifica a validação quando a propriedade obrigatória não é enviada.",
       "method": "POST",
@@ -140,7 +140,7 @@
       "parentId": "fld_shorten_tests",
       "modified": 1791892800000,
       "created": 1791892800000,
-      "url": "http://localhost:8080/urls/shorten",
+      "url": "http://localhost:8080/shorten",
       "name": "04 - Protocolo FTP (espera 400)",
       "description": "Verifica que apenas URLs HTTP e HTTPS sejam aceitas.",
       "method": "POST",
@@ -175,7 +175,7 @@
       "parentId": "fld_shorten_tests",
       "modified": 1791892800000,
       "created": 1791892800000,
-      "url": "http://localhost:8080/urls/shorten",
+      "url": "http://localhost:8080/shorten",
       "name": "05 - URL malformada (espera 400)",
       "description": "Verifica a validação de formato da URL.",
       "method": "POST",
@@ -198,6 +198,74 @@
         "encodeUrl": true,
         "rebuildPath": true,
         "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "fld_redirect_tests",
+      "parentId": "wrk_urlshortener_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "name": "GET /{shortCode}",
+      "description": "Valida o redirecionamento de códigos existentes e o comportamento para códigos inexistentes.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1791892801000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_redirect_valid",
+      "parentId": "fld_redirect_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "url": "http://localhost:8080/{shortCode}",
+      "name": "01 - Redirecionar código existente (espera 302)",
+      "description": "Substitua {shortCode} pelo código de uma URL já cadastrada antes de enviar a requisição.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "const location = insomnia.response.headers.find(\n  (header) => header.key.toLowerCase() === 'location'\n);\n\ninsomnia.test('responde HTTP 302', () => {\n  insomnia.expect(insomnia.response.code).to.eql(302);\n});\n\ninsomnia.test('informa a URL original no cabeçalho Location', () => {\n  insomnia.expect(location, 'cabeçalho Location').to.exist;\n  insomnia.expect(location.value).to.eql('https://example.com/minha-pagina');\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": false,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_redirect_missing",
+      "parentId": "fld_redirect_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "url": "http://localhost:8080/codigo-inexistente",
+      "name": "02 - Código inexistente (espera 404)",
+      "description": "Verifica que um código ausente seja informado como recurso não encontrado.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('responde HTTP 404 para código inexistente', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": false,
         "cookies": {
           "send": true,
           "store": true
