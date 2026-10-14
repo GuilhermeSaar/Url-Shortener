@@ -18,17 +18,18 @@ import java.time.LocalDateTime;
 public class UrlModel {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq")
+    @SequenceGenerator(name = "seq", sequenceName = "seq_url", allocationSize = 1)
     private Long id;
 
-    @Column(length = 6)
+    @Column(length = 7, unique = true)
     private String code;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String urlOriginal;
 
-    @Column(nullable = false)
-    private Long clickCount;
+    @Column(nullable = false, columnDefinition = "bigint default 0")
+    private Long clickCount = 0L;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

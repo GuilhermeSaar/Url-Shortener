@@ -19,7 +19,7 @@ public class UrlController {
     @GetMapping(value = "url/{code}")
     public ResponseEntity<UrlStatsResponse> getUrlStats(@PathVariable String code) {
 
-        var response = service.gerUrlStats(code);
+        var response = service.getUrlStats(code);
         return ResponseEntity.ok(response);
     }
 }

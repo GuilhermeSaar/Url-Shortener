@@ -10,7 +10,7 @@
       "modified": 1791892800000,
       "created": 1791892800000,
       "name": "URL Shortener - Testes da API",
-      "description": "Testes manuais da rota de encurtamento implementada no projeto.",
+      "description": "Testes manuais dos endpoints de encurtamento, redirecionamento e consulta de estatísticas do projeto.",
       "scope": "collection",
       "_type": "workspace"
     },
@@ -260,6 +260,84 @@
       "authentication": {},
       "scripts": {
         "afterResponse": "insomnia.test('responde HTTP 404 para código inexistente', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": false,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "fld_stats_tests",
+      "parentId": "wrk_urlshortener_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "name": "GET /api/url/{code}",
+      "description": "Consulta as estatísticas de um código existente e verifica o erro para um código inexistente.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1791892802000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_stats_valid",
+      "parentId": "fld_stats_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "url": "http://localhost:8080/api/url/COLE_O_CODIGO_GERADO",
+      "name": "01 - Consultar estatísticas de URL existente (espera 200)",
+      "description": "Execute primeiro a requisição POST /shorten para a URL https://example.com/minha-pagina. Copie o código no final da URL retornada e substitua COLE_O_CODIGO_GERADO nesta rota. A consulta deve retornar a data de criação, a contagem de cliques e a URL original.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "const body = JSON.parse(insomnia.response.text());\n\ninsomnia.test('responde HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('retorna os campos de estatísticas da URL', () => {\n  insomnia.expect(body).to.have.all.keys('date', 'clickCount', 'urlOriginal');\n  insomnia.expect(body.date).to.be.a('string');\n  insomnia.expect(body.date).to.include('T');\n  insomnia.expect(body.clickCount).to.be.a('number');\n  insomnia.expect(body.clickCount).to.be.at.least(0);\n  insomnia.expect(body.urlOriginal).to.eql('https://example.com/minha-pagina');\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": false,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_stats_missing",
+      "parentId": "fld_stats_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "url": "http://localhost:8080/api/url/codigo-inexistente-404",
+      "name": "02 - Consultar código inexistente (espera 404)",
+      "description": "Verifica a resposta de erro do GlobalExceptionHandler para um código que não está cadastrado.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "const body = JSON.parse(insomnia.response.text());\n\ninsomnia.test('responde HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('retorna o formato esperado de erro', () => {\n  insomnia.expect(body).to.have.all.keys('timestamp', 'status', 'error', 'path', 'errors');\n  insomnia.expect(body.status).to.eql(404);\n  insomnia.expect(body.path).to.eql('/api/url/codigo-inexistente-404');\n  insomnia.expect(body.errors).to.be.an('array').that.is.not.empty;\n});"
       },
       "settings": {
         "renderRequestBody": true,

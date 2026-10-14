@@ -23,14 +23,9 @@ public class UrlService {
 
         var urlModel = new UrlModel();
         urlModel.setUrlOriginal(longUrl);
-        urlModel.setClickCount(0L);
-
         repository.save(urlModel);
-
         String code = sqids.encode(List.of(urlModel.getId()));
-
         urlModel.setCode(code);
-        repository.save(urlModel);
 
         return code;
     }
@@ -40,17 +35,17 @@ public class UrlService {
 
         if (code == null) throw new ResourceNotFoundException("O código da url nao pode ser nulo");
 
-        repository.incrementClickCount(code);
-
         var urlLong = repository.findByCode(code).orElseThrow(
                 () -> new ResourceNotFoundException("URL não encontrada")
         );
+
+        repository.incrementClickCount(code);
 
         return urlLong.getUrlOriginal();
     }
 
     @Transactional(readOnly = true)
-    public UrlStatsResponse gerUrlStats(String code) {
+    public UrlStatsResponse getUrlStats(String code) {
 
         var urlModel = repository.findByCode(code).orElseThrow(
                 () -> new ResourceNotFoundException("Recurso nao encontrado")
