@@ -17,8 +17,8 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({UrlNotFoundException.class})
-    public ResponseEntity<ResponseError> urlNotFoundException(UrlNotFoundException ex, HttpServletRequest request) {
+    @ExceptionHandler({ResourceNotFoundException.class})
+    public ResponseEntity<ResponseError> urlNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.NOT_FOUND;
 
@@ -32,7 +32,6 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(status).body(response);
     }
-
 
     @ExceptionHandler({MethodArgumentNotValidException.class})
     public ResponseEntity<ResponseError> validationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
