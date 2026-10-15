@@ -14,7 +14,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "urls")
+@Table(name = "urls",
+    indexes = {
+        @Index(name = "index_url_code", columnList = "code")
+    })
 public class UrlModel {
 
     @Id

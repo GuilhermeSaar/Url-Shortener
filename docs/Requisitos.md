@@ -7,7 +7,7 @@
 
 | Escopo | Plataforma | Capacidade diária |
 |---|---|---|
-| Criação, redirecionamento e estatísticas | Java · Spring Boot · PostgreSQL · Docker Compose | Até 20.000 novas URLs por dia |
+| Criação, redirecionamento e estatísticas | Java · Spring Boot · PostgreSQL · Docker Compose | Até 100.000 novas URLs por dia |
 
 ## 1. Visão geral do projeto
 
@@ -55,11 +55,11 @@ A unicidade dos códigos encurtados deve ser garantida nativamente pelo banco de
 
 #### RNF04 — Volume de criação
 
-O sistema deve ser dimensionado para um volume projetado de até **20.000 novas URLs por dia**.
+O sistema deve ser dimensionado para um volume projetado de até **100.000 novas URLs por dia**.
 
 #### RNF05 — Capacidade acumulada
 
-A solução deve considerar aproximadamente **73 milhões de URLs cadastradas**, sem exigir a execução contínua do projeto durante esse período.
+A solução deve considerar aproximadamente **365 milhões de URLs cadastradas**, sem exigir a execução contínua do projeto durante esse período.
 
 ### 3.3 Desempenho e infraestrutura
 

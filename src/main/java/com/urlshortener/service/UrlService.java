@@ -40,7 +40,6 @@ public class UrlService {
         );
 
         repository.incrementClickCount(code);
-
         return urlLong.getUrlOriginal();
     }
 

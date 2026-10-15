@@ -20,7 +20,7 @@
       "modified": 1791892800000,
       "created": 1791892800000,
       "name": "POST /shorten",
-      "description": "Um sucesso e quatro entradas inválidas para validar o endpoint atual.",
+      "description": "Um sucesso e cinco entradas inválidas para validar o endpoint atual.",
       "environment": {},
       "environmentPropertyOrder": null,
       "metaSortKey": 1791892800000,
@@ -192,6 +192,41 @@
       "authentication": {},
       "scripts": {
         "afterResponse": "insomnia.test('rejeita URL malformada com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_shorten_http_missing_host",
+      "parentId": "fld_shorten_tests",
+      "modified": 1791892800000,
+      "created": 1791892800000,
+      "url": "http://localhost:8080/shorten",
+      "name": "06 - URL HTTP sem host (espera 400)",
+      "description": "Reproduz a URL malformada http:///only-path, que deve ser rejeitada antes do cadastro.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"url\": \"http:///only-path\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('rejeita URL HTTP sem host com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
       },
       "settings": {
         "renderRequestBody": true,

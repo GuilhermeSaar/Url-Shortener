@@ -17,5 +17,4 @@ public interface UrlRepository extends JpaRepository<UrlModel, Long> {
     void incrementClickCount(@Param("code") String code);
 
     Optional<UrlModel> findByCode(String code);
-
 }
