@@ -1,6 +1,7 @@
 package com.urlshortener.controller;
 
 import com.urlshortener.controller.dto.UrlRequest;
+import com.urlshortener.controller.dto.UrlResponse;
 import com.urlshortener.service.UrlService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -19,7 +20,7 @@ public class ShortenUrlController {
     private final UrlService service;
 
     @PostMapping(value = "/shorten")
-    public ResponseEntity<String> shortenUrl(@Valid @RequestBody UrlRequest request) {
+    public ResponseEntity<UrlResponse> shortenUrl(@Valid @RequestBody UrlRequest request) {
 
         String shortCode = service.createShortenUrl(request.url());
         String longUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -27,7 +28,7 @@ public class ShortenUrlController {
                 .buildAndExpand(shortCode)
                 .toUriString();
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(longUrl);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new UrlResponse(longUrl));
     }
 
     @GetMapping("/{shortCode}")

@@ -1,5 +1,6 @@
-package com.urlshortener.exception;
+package com.urlshortener.exception.global;
 
+import com.urlshortener.exception.ResourceNotFoundException;
 import com.urlshortener.exception.dto.FieldErrors;
 import com.urlshortener.exception.dto.ResponseError;
 import jakarta.servlet.http.HttpServletRequest;

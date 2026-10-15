@@ -14,10 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "urls",
-    indexes = {
-        @Index(name = "index_url_code", columnList = "code")
-    })
+@Table(name = "urls")
 public class UrlModel {
 
     @Id
@@ -25,7 +22,7 @@ public class UrlModel {
     @SequenceGenerator(name = "seq", sequenceName = "seq_url", allocationSize = 1)
     private Long id;
 
-    @Column(length = 7, unique = true)
+    @Column(length = 6, unique = true)
     private String code;
 
     @Column(nullable = false, columnDefinition = "TEXT")

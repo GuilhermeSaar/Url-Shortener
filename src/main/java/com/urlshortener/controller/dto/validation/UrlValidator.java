@@ -21,8 +21,7 @@ public class UrlValidator implements ConstraintValidator<ValidUrl, String> {
                     && (uri.getScheme().equalsIgnoreCase("http")
                     || uri.getScheme().equalsIgnoreCase("https"))
                     && host != null
-                    && !host.isBlank()
-                    && host.contains(".");
+                    && !host.isBlank();
 
         } catch (URISyntaxException e) { return false; }
     }

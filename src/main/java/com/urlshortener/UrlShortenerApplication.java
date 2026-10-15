@@ -19,5 +19,10 @@ public class UrlShortenerApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
+//        String url = "https://www.google.com";
+//
+//        for (int i = 0; i <= 1000000; i++) {
+//            service.createShortenUrl(url);
+//        }
     }
 }
