@@ -5,6 +5,7 @@ import com.urlshortener.exception.ResourceNotFoundException;
 import com.urlshortener.model.UrlModel;
 import com.urlshortener.repository.UrlRepository;
 import lombok.AllArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.sqids.Sqids;
@@ -21,12 +22,15 @@ public class UrlService {
     @Transactional
     public String createShortenUrl(String longUrl) {
 
-        var urlModel = new UrlModel();
-        urlModel.setUrlOriginal(longUrl);
-        repository.save(urlModel);
-        String code = sqids.encode(List.of(urlModel.getId()));
-        urlModel.setCode(code);
+        if (longUrl == null || longUrl.isBlank()) {
+            throw new IllegalArgumentException("Url inválida");
+        }
 
+        var nextId = repository.getNextSequenceId();
+        var code = sqids.encode(List.of(nextId));
+
+        var urlModel = new UrlModel(nextId, code, longUrl);
+        repository.save(urlModel);
         return code;
     }
 

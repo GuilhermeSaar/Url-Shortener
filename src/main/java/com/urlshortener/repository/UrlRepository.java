@@ -12,9 +12,11 @@ import java.util.Optional;
 public interface UrlRepository extends JpaRepository<UrlModel, Long> {
 
     @Modifying
-    @Transactional
     @Query("UPDATE UrlModel u SET u.clickCount = u.clickCount + 1 WHERE u.code = :code")
     void incrementClickCount(@Param("code") String code);
 
     Optional<UrlModel> findByCode(String code);
+
+    @Query(value = "SELECT nextval('seq_url')", nativeQuery = true)
+    Long getNextSequenceId();
 }

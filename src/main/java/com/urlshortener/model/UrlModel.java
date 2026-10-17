@@ -1,11 +1,9 @@
 package com.urlshortener.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDateTime;
 
@@ -15,14 +13,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Entity
 @Table(name = "urls")
-public class UrlModel {
+public class UrlModel implements Persistable<Long> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq")
-    @SequenceGenerator(name = "seq", sequenceName = "seq_url", allocationSize = 1)
     private Long id;
 
-    @Column(length = 6, unique = true)
+    @Column(nullable = false, length = 6, unique = true)
     private String code;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -34,4 +30,17 @@ public class UrlModel {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public UrlModel(Long nextId, String code, String longUrl) {
+        this.id = nextId;
+        this.code = code;
+        this.urlOriginal = longUrl;
+        this.clickCount = 0L;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @Override
+    public boolean isNew() {
+        return true;
+    }
 }
