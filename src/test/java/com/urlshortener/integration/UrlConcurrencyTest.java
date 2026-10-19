@@ -1,5 +1,6 @@
-package com.urlshortener;
+package com.urlshortener.integration;
 
+import com.jayway.jsonpath.JsonPath;
 import com.urlshortener.repository.UrlRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class UrlConcurrencyTest {
+class UrlConcurrencyTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -30,19 +31,19 @@ public class UrlConcurrencyTest {
 
     @Test
     void shouldIncrementCounterWithThreadConcurrency() throws Exception {
-
         var responseContent = mockMvc.perform(post("/shorten")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"url\": \"https://github.com\"}"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"url\": \"https://github.com\"}"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
-        String[] parts = responseContent.split("/");
-        var shortCode = parts[parts.length - 1];
+        var shortUrl = java.net.URI.create((String) JsonPath.read(responseContent, "$.response"));
+        var path = shortUrl.getPath();
+        var shortCode = path.substring(path.lastIndexOf('/') + 1);
 
         var numberOfThreads = 5000;
         ExecutorService service = Executors.newFixedThreadPool(numberOfThreads);
-        var latch  = new CountDownLatch(numberOfThreads);
+        var latch = new CountDownLatch(numberOfThreads);
 
         for (int i = 0; i < numberOfThreads; i++) {
             service.submit(() -> {
