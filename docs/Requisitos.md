@@ -35,6 +35,10 @@ O sistema deve permitir consultar a data de criação e a quantidade de acessos 
 
 O sistema deve informar adequadamente quando um código solicitado não corresponder a um link cadastrado.
 
+### RF06 — Retenção de dados
+
+Cada link encurtado deve ser criado com data de expiração definida para **90 dias** a partir de sua criação. A data de expiração deve poder ser alterada enquanto o link estiver ativo. Após a expiração, o link não deve mais redirecionar, deve ser tratado como inexistente e seus dados — URL original, código, data de criação e estatísticas de acesso — devem ser removidos de forma definitiva.
+
 ## 3. Requisitos não funcionais (RNF)
 
 ### 3.1 Códigos e integridade
@@ -69,7 +73,7 @@ O tempo de resposta dos redirecionamentos deve ter como meta um **p95 inferior a
 
 #### RNF08 — Persistência
 
-O PostgreSQL deve ser utilizado como banco de dados relacional, com restrição de unicidade e índice adequado para consultas pelo código encurtado.
+O PostgreSQL deve ser utilizado como banco de dados relacional, com restrição de unicidade e índices adequados para consultas pelo código encurtado e para a identificação de links expirados.
 
 #### RNF09 — Conteinerização
 

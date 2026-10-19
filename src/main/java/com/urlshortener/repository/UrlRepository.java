@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public interface UrlRepository extends JpaRepository<UrlModel, Long> {
@@ -19,4 +20,6 @@ public interface UrlRepository extends JpaRepository<UrlModel, Long> {
 
     @Query(value = "SELECT nextval('seq_url')", nativeQuery = true)
     Long getNextSequenceId();
+
+    void deleteByExpiresAtBefore(Instant now);
 }

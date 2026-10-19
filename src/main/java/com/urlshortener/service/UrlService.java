@@ -35,7 +35,7 @@ public class UrlService {
     }
 
     @Transactional
-    public String findUrlOriginalByCode(String code) {
+    public String originalUrl(String code) {
 
         if (code == null) throw new ResourceNotFoundException("O código da url nao pode ser nulo");
 

@@ -5,12 +5,13 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.domain.Persistable;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "urls")
 public class UrlModel implements Persistable<Long> {
@@ -27,6 +28,12 @@ public class UrlModel implements Persistable<Long> {
     @Column(nullable = false, columnDefinition = "bigint default 0")
     private Long clickCount = 0L;
 
+    @Column(nullable = false)
+    private Instant expiresAt;
+
+    @Transient
+    private boolean newEntity = true;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -36,11 +43,21 @@ public class UrlModel implements Persistable<Long> {
         this.code = code;
         this.urlOriginal = longUrl;
         this.clickCount = 0L;
-        this.createdAt = LocalDateTime.now();
+    }
+
+    @PostPersist
+    @PostLoad
+    private void markNotNew() {
+        this.newEntity = false;
+    }
+
+    @PrePersist
+    protected void prePersist() {
+        this.expiresAt = Instant.now().plus(90, ChronoUnit.DAYS);
     }
 
     @Override
     public boolean isNew() {
-        return true;
+        return newEntity;
     }
 }

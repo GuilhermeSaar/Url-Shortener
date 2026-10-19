@@ -36,7 +36,7 @@ public class ShortenUrlController {
 
         HttpHeaders headers = new HttpHeaders();
 
-        var originalUrl = service.findUrlOriginalByCode(shortCode);
+        var originalUrl = service.originalUrl(shortCode);
 
         headers.setLocation(URI.create(originalUrl));
 
