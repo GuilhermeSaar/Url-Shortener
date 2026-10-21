@@ -1,6 +1,6 @@
 package com.urlshortener;
 
-import com.urlshortener.service.UrlService;
+import com.urlshortener.url.service.UrlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

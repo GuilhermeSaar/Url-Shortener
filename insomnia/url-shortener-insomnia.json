@@ -46,12 +46,12 @@
         },
         {
           "name": "Accept",
-          "value": "text/plain"
+          "value": "application/json"
         }
       ],
       "authentication": {},
       "scripts": {
-        "afterResponse": "const shortUrl = insomnia.response.text().trim();\n\ninsomnia.test('responde HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('retorna URL curta com código Base62 de 6 caracteres', () => {\n  insomnia.expect(shortUrl).to.match(/^https?:\\/\\/[^/]+\\/[a-zA-Z0-9]{6}$/);\n});"
+        "afterResponse": "const body = JSON.parse(insomnia.response.text());\nconst shortUrl = body.response;\n\ninsomnia.test('responde HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('retorna URL curta com código Base62 de 6 caracteres', () => {\n  insomnia.expect(shortUrl).to.match(/^https?:\\/\\/[^/]+\\/[a-zA-Z0-9]{6}$/);\n});"
       },
       "settings": {
         "renderRequestBody": true,
@@ -309,16 +309,204 @@
       "_type": "request"
     },
     {
+      "_id": "fld_auth_tests",
+      "parentId": "wrk_urlshortener_tests",
+      "modified": 1792604987000,
+      "created": 1792604987000,
+      "name": "Autenticação",
+      "description": "Execute cadastro e login nesta ordem. Copie o JWT retornado pelo login para as requisições autenticadas.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1792604987000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_register_valid",
+      "parentId": "fld_auth_tests",
+      "modified": 1792604987000,
+      "created": 1792604987000,
+      "url": "http://localhost:8080/register",
+      "name": "01 - Cadastrar usuário (espera 201)",
+      "description": "Cria o usuário de teste insomnia@example.com. Altere o e-mail no corpo se ele já existir.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"insomnia@example.com\",\n  \"password\": \"password123\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('responde HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_register_duplicate",
+      "parentId": "fld_auth_tests",
+      "modified": 1792604987000,
+      "created": 1792604987000,
+      "url": "http://localhost:8080/register",
+      "name": "02 - Cadastrar e-mail repetido (espera 409)",
+      "description": "Execute após o cadastro bem-sucedido para validar o bloqueio de e-mail duplicado.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"insomnia@example.com\",\n  \"password\": \"password123\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('responde HTTP 409 para e-mail duplicado', () => {\n  insomnia.expect(insomnia.response.code).to.eql(409);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_login_valid",
+      "parentId": "fld_auth_tests",
+      "modified": 1792604987000,
+      "created": 1792604987000,
+      "url": "http://localhost:8080/login",
+      "name": "03 - Login válido (espera 200)",
+      "description": "Autentica o usuário. Copie o campo token da resposta para o cabeçalho Authorization das consultas autenticadas.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"insomnia@example.com\",\n  \"password\": \"password123\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "const body = JSON.parse(insomnia.response.text());\n\ninsomnia.test('responde HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('retorna um JWT', () => {\n  insomnia.expect(body.token).to.be.a('string').and.not.empty;\n  insomnia.expect(body.token.split('.')).to.have.length(3);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_login_invalid",
+      "parentId": "fld_auth_tests",
+      "modified": 1792604987000,
+      "created": 1792604987000,
+      "url": "http://localhost:8080/login",
+      "name": "04 - Login com senha inválida (espera 401)",
+      "description": "Valida a rejeição de credenciais incorretas.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"insomnia@example.com\",\n  \"password\": \"senha-incorreta\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('responde HTTP 401 para credenciais inválidas', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": true,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
       "_id": "fld_stats_tests",
       "parentId": "wrk_urlshortener_tests",
       "modified": 1791892800000,
       "created": 1791892800000,
       "name": "GET /api/url/{code}",
-      "description": "Consulta as estatísticas de um código existente e verifica o erro para um código inexistente.",
+      "description": "Consulta as estatísticas de um código existente e verifica autenticação JWT e o erro para código inexistente.",
       "environment": {},
       "environmentPropertyOrder": null,
       "metaSortKey": 1791892802000,
       "_type": "request_group"
+    },
+    {
+      "_id": "req_stats_without_token",
+      "parentId": "fld_stats_tests",
+      "modified": 1792604987000,
+      "created": 1792604987000,
+      "url": "http://localhost:8080/api/url/COLE_O_CODIGO_GERADO",
+      "name": "01 - Consultar estatísticas sem JWT (espera 401)",
+      "description": "A rota /api/** deve exigir autenticação.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('responde HTTP 401 sem token', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": false,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
     },
     {
       "_id": "req_stats_valid",
@@ -326,8 +514,8 @@
       "modified": 1791892800000,
       "created": 1791892800000,
       "url": "http://localhost:8080/api/url/COLE_O_CODIGO_GERADO",
-      "name": "01 - Consultar estatísticas de URL existente (espera 200)",
-      "description": "Execute primeiro a requisição POST /shorten para a URL https://example.com/minha-pagina. Copie o código no final da URL retornada e substitua COLE_O_CODIGO_GERADO nesta rota. A consulta deve retornar a data de criação, a contagem de cliques e a URL original.",
+      "name": "02 - Consultar estatísticas com JWT (espera 200)",
+      "description": "Execute POST /shorten e depois Login válido. Cole o código retornado na URL e o token do login no cabeçalho Authorization.",
       "method": "GET",
       "body": {},
       "parameters": [],
@@ -335,6 +523,10 @@
         {
           "name": "Accept",
           "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer COLE_O_TOKEN_DO_LOGIN_AQUI"
         }
       ],
       "authentication": {},
@@ -359,8 +551,8 @@
       "modified": 1791892800000,
       "created": 1791892800000,
       "url": "http://localhost:8080/api/url/codigo-inexistente-404",
-      "name": "02 - Consultar código inexistente (espera 404)",
-      "description": "Verifica a resposta de erro do GlobalExceptionHandler para um código que não está cadastrado.",
+      "name": "03 - Consultar código inexistente com JWT (espera 404)",
+      "description": "Verifica a resposta de erro para um código que não está cadastrado após autenticação.",
       "method": "GET",
       "body": {},
       "parameters": [],
@@ -368,6 +560,10 @@
         {
           "name": "Accept",
           "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer COLE_O_TOKEN_DO_LOGIN_AQUI"
         }
       ],
       "authentication": {},

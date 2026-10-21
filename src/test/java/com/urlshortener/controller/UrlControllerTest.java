@@ -1,7 +1,8 @@
 package com.urlshortener.controller;
 
-import com.urlshortener.dto.UrlStatsResponse;
-import com.urlshortener.service.UrlService;
+import com.urlshortener.url.controller.UrlController;
+import com.urlshortener.url.dto.UrlStatsResponse;
+import com.urlshortener.url.service.UrlService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

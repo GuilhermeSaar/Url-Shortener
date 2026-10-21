@@ -3,3 +3,8 @@
 .mvn/wrapper/maven-wrapper.jar
 target
 *.iml
+.env
+.env.*
+!.env.example
+secrets/
+**/secrets/

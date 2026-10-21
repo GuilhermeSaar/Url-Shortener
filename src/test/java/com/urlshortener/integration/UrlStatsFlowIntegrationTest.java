@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "security.jwt.secret=dGVzdC1qd3Qta2V5LXRvLWtlZXAtc3ByaW5nLWJvb3QtdGVzdHMtc2VsZi1jb250YWluZWQtYW5kLWRldGVybWluaXN0aWM=")
 @AutoConfigureMockMvc
 @Transactional
 class UrlStatsFlowIntegrationTest {
@@ -42,6 +42,29 @@ class UrlStatsFlowIntegrationTest {
         var shortCode = shortUrl.getPath().substring(shortUrl.getPath().lastIndexOf('/') + 1);
 
         mockMvc.perform(get("/api/url/{code}", shortCode))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"stats@example.com","password":"password123"}
+                                """))
+                .andExpect(status().isCreated());
+
+        var loginResponse = mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"stats@example.com","password":"password123"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        var token = (String) JsonPath.read(loginResponse, "$.token");
+
+        mockMvc.perform(get("/api/url/{code}", shortCode)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.date").isNotEmpty())
                 .andExpect(jsonPath("$.clickCount").value(0))

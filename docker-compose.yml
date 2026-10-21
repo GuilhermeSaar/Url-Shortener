@@ -23,6 +23,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/url_shortener
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=
+      - JWT_SECRET=${JWT_SECRET:?Defina JWT_SECRET no ambiente ou no arquivo .env}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-3600000}
     depends_on:
       db:
         condition: service_healthy

@@ -1,9 +1,10 @@
 package com.urlshortener.service;
 
-import com.urlshortener.dto.UrlStatsResponse;
-import com.urlshortener.exception.ResourceNotFoundException;
-import com.urlshortener.model.UrlModel;
-import com.urlshortener.repository.UrlRepository;
+import com.urlshortener.url.dto.UrlStatsResponse;
+import com.urlshortener.shared.exception.ResourceNotFoundException;
+import com.urlshortener.url.model.UrlModel;
+import com.urlshortener.url.repository.UrlRepository;
+import com.urlshortener.url.service.UrlService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
