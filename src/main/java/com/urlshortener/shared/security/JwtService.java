@@ -1,6 +1,7 @@
 package com.urlshortener.shared.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -46,5 +47,20 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    public boolean isTokenValid(String token, UserDetails user) {
+
+        try {
+            var claims = claims(token);
+            var userNameToken = claims.getSubject();
+            boolean isNotExpired = claims.getExpiration().after(new Date());
+            boolean isValid = userNameToken.equals(user.getUsername());
+
+            return isNotExpired && isValid;
+
+        } catch (io.jsonwebtoken.ExpiredJwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 }
