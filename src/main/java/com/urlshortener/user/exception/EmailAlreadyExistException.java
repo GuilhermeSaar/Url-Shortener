@@ -1,4 +1,4 @@
-package com.urlshortener.shared.exception;
+package com.urlshortener.user.exception;
 
 public class EmailAlreadyExistException extends RuntimeException {
     public EmailAlreadyExistException(String message) {

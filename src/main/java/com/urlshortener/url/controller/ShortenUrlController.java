@@ -1,7 +1,7 @@
 package com.urlshortener.url.controller;
 
-import com.urlshortener.url.controller.dto.UrlRequest;
-import com.urlshortener.url.controller.dto.UrlResponse;
+import com.urlshortener.url.dto.UrlRequest;
+import com.urlshortener.url.dto.UrlResponse;
 import com.urlshortener.url.service.UrlService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;

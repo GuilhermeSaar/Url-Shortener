@@ -1,8 +1,9 @@
 package com.urlshortener.user.service;
 
+import com.urlshortener.user.exception.FailedRetrieveAuthenticatedException;
 import com.urlshortener.shared.security.JwtService;
-import com.urlshortener.user.controller.dto.LoginRequest;
-import com.urlshortener.user.controller.dto.TokenResponse;
+import com.urlshortener.user.dto.LoginRequest;
+import com.urlshortener.user.dto.TokenResponse;
 import com.urlshortener.user.model.UserModel;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,6 +29,6 @@ public class AuthService {
             return new TokenResponse(token);
         }
 
-        throw  new IllegalArgumentException("Falha ao recuperar o usuário autenticado.");
+        throw  new FailedRetrieveAuthenticatedException("Falha ao recuperar o usuário autenticado.");
     }
 }

@@ -1,8 +1,8 @@
 package com.urlshortener.user.controller;
 
-import com.urlshortener.user.controller.dto.LoginRequest;
-import com.urlshortener.user.controller.dto.RegisterRequest;
-import com.urlshortener.user.controller.dto.TokenResponse;
+import com.urlshortener.user.dto.LoginRequest;
+import com.urlshortener.user.dto.RegisterRequest;
+import com.urlshortener.user.dto.TokenResponse;
 import com.urlshortener.user.service.AuthService;
 import com.urlshortener.user.service.UserService;
 import jakarta.validation.Valid;

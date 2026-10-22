@@ -1,7 +1,7 @@
 package com.urlshortener.url.service;
 
 import com.urlshortener.url.dto.UrlStatsResponse;
-import com.urlshortener.shared.exception.ResourceNotFoundException;
+import com.urlshortener.url.exception.UrlNotFoundException;
 import com.urlshortener.url.model.UrlModel;
 import com.urlshortener.url.repository.UrlRepository;
 import lombok.AllArgsConstructor;
@@ -36,10 +36,10 @@ public class UrlService {
     @Transactional
     public String originalUrl(String code) {
 
-        if (code == null) throw new ResourceNotFoundException("O código da url nao pode ser nulo");
+        if (code == null) throw new UrlNotFoundException("O código da url nao pode ser nulo");
 
         var urlLong = repository.findByCode(code).orElseThrow(
-                () -> new ResourceNotFoundException("URL não encontrada")
+                () -> new UrlNotFoundException("URL não encontrada")
         );
 
         repository.incrementClickCount(code);
@@ -50,7 +50,7 @@ public class UrlService {
     public UrlStatsResponse getUrlStats(String code) {
 
         var urlModel = repository.findByCode(code).orElseThrow(
-                () -> new ResourceNotFoundException("Recurso nao encontrado")
+                () -> new UrlNotFoundException("Recurso nao encontrado")
         );
 
         return new UrlStatsResponse(urlModel.getCreatedAt(), urlModel.getClickCount(), urlModel.getUrlOriginal());

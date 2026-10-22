@@ -1,6 +1,6 @@
-package com.urlshortener.url.controller.dto;
+package com.urlshortener.url.dto;
 
-import com.urlshortener.url.controller.dto.validation.ValidUrl;
+import com.urlshortener.url.dto.validation.ValidUrl;
 import jakarta.validation.constraints.NotBlank;
 
 public record UrlRequest(

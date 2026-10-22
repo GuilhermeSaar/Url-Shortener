@@ -1,7 +1,7 @@
 package com.urlshortener.service;
 
 import com.urlshortener.url.dto.UrlStatsResponse;
-import com.urlshortener.shared.exception.ResourceNotFoundException;
+import com.urlshortener.url.exception.UrlNotFoundException;
 import com.urlshortener.url.model.UrlModel;
 import com.urlshortener.url.repository.UrlRepository;
 import com.urlshortener.url.service.UrlService;
@@ -79,7 +79,7 @@ public class UrlServiceTest {
 
     @Test
     void shouldThrowWhenOriginalUrlCodeIsNull() {
-        assertThrows(ResourceNotFoundException.class, () -> urlService.originalUrl(null));
+        assertThrows(UrlNotFoundException.class, () -> urlService.originalUrl(null));
 
         verifyNoInteractions(repository);
     }
@@ -89,7 +89,7 @@ public class UrlServiceTest {
         var code = "inexistente";
         when(repository.findByCode(code)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> urlService.originalUrl(code));
+        assertThrows(UrlNotFoundException.class, () -> urlService.originalUrl(code));
 
         verify(repository).findByCode(code);
         verify(repository, never()).incrementClickCount(anyString());
@@ -120,7 +120,7 @@ public class UrlServiceTest {
         var code = "inexistente";
         when(repository.findByCode(code)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> urlService.getUrlStats(code));
+        assertThrows(UrlNotFoundException.class, () -> urlService.getUrlStats(code));
 
         verify(repository).findByCode(code);
     }

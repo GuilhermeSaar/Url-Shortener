@@ -1,7 +1,8 @@
-package com.urlshortener.shared.exception.global;
+package com.urlshortener.shared.exception.handler;
 
-import com.urlshortener.shared.exception.EmailAlreadyExistException;
-import com.urlshortener.shared.exception.ResourceNotFoundException;
+import com.urlshortener.user.exception.FailedRetrieveAuthenticatedException;
+import com.urlshortener.user.exception.EmailAlreadyExistException;
+import com.urlshortener.url.exception.UrlNotFoundException;
 import com.urlshortener.shared.exception.dto.FieldErrors;
 import com.urlshortener.shared.exception.dto.ResponseError;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,8 +20,8 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({ResourceNotFoundException.class})
-    public ResponseEntity<ResponseError> urlNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
+    @ExceptionHandler({UrlNotFoundException.class})
+    public ResponseEntity<ResponseError> urlNotFoundException(UrlNotFoundException ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.NOT_FOUND;
 
@@ -74,8 +75,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(response);
     }
 
-    @ExceptionHandler({IllegalArgumentException.class})
-    public ResponseEntity<ResponseError> failedRetrieveAuthenticated(IllegalArgumentException ex, HttpServletRequest request) {
+    @ExceptionHandler({FailedRetrieveAuthenticatedException.class})
+    public ResponseEntity<ResponseError> failedRetrieveAuthenticated(FailedRetrieveAuthenticatedException ex, HttpServletRequest request) {
 
         var status = HttpStatus.UNAUTHORIZED;
 

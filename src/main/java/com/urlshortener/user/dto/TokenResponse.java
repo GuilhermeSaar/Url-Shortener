@@ -1,4 +1,4 @@
-package com.urlshortener.user.controller.dto;
+package com.urlshortener.user.dto;
 
 public record TokenResponse(String token) {
 }

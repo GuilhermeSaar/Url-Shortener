@@ -1,4 +1,4 @@
-package com.urlshortener.url.controller.dto.validation;
+package com.urlshortener.url.dto.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
