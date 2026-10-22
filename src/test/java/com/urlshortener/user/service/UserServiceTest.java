@@ -1,7 +1,5 @@
 package com.urlshortener.user.service;
 
-import com.urlshortener.shared.security.JwtService;
-import com.urlshortener.user.controller.dto.LoginRequest;
 import com.urlshortener.user.controller.dto.RegisterRequest;
 import com.urlshortener.user.domain.RoleUser;
 import com.urlshortener.user.model.UserModel;
@@ -13,8 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -28,9 +24,6 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private JwtService jwtService;
 
     @InjectMocks
     private UserService service;
@@ -51,20 +44,4 @@ class UserServiceTest {
         assertThat(user.getRole()).isEqualTo(RoleUser.ROLE_USER);
     }
 
-    @Test
-    void shouldReturnJwtForValidCredentials() {
-        var user = new UserModel();
-        user.setEmail("user@example.com");
-        user.setPassword("hashed-password");
-        user.setRole(RoleUser.ROLE_USER);
-        var request = new LoginRequest("user@example.com", "password123");
-
-        when(repository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("password123", "hashed-password")).thenReturn(true);
-        when(jwtService.generateToken(user)).thenReturn("jwt-token");
-
-        var response = service.login(request);
-
-        assertThat(response.token()).isEqualTo("jwt-token");
-    }
 }

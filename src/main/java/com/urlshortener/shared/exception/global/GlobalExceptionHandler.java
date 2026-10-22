@@ -1,5 +1,6 @@
 package com.urlshortener.shared.exception.global;
 
+import com.urlshortener.shared.exception.EmailAlreadyExistException;
 import com.urlshortener.shared.exception.ResourceNotFoundException;
 import com.urlshortener.shared.exception.dto.FieldErrors;
 import com.urlshortener.shared.exception.dto.ResponseError;
@@ -48,7 +49,6 @@ public class GlobalExceptionHandler {
 
             errors.add(new FieldErrors(field, error));
         }
-
         var response = new ResponseError(
                 Instant.now(),
                 status.value(),
@@ -56,7 +56,36 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 errors
         );
+        return ResponseEntity.status(status).body(response);
+    }
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    @ExceptionHandler({EmailAlreadyExistException.class})
+    public ResponseEntity<ResponseError> emailAlreadyExist(EmailAlreadyExistException ex, HttpServletRequest request) {
+
+        var status = HttpStatus.CONFLICT;
+
+        var response = new ResponseError(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                request.getRequestURI(),
+                List.of(new FieldErrors("email", ex.getMessage()))
+        );
+        return ResponseEntity.status(status).body(response);
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class})
+    public ResponseEntity<ResponseError> failedRetrieveAuthenticated(IllegalArgumentException ex, HttpServletRequest request) {
+
+        var status = HttpStatus.UNAUTHORIZED;
+
+        var response = new ResponseError(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                request.getRequestURI(),
+                List.of(new FieldErrors(null, ex.getMessage()))
+        );
+        return ResponseEntity.status(status).body(response);
     }
 }

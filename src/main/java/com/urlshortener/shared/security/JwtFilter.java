@@ -21,43 +21,8 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
-    private static final String BEARER_PREFIX = "Bearer ";
-
-    private final JwtService jwtService;
-    private final UserService userService;
-
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
-        String authorization = request.getHeader("Authorization");
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        if (authorization != null && authorization.startsWith(BEARER_PREFIX)
-                && SecurityContextHolder.getContext().getAuthentication() == null) {
-            authenticate(authorization.substring(BEARER_PREFIX.length()));
-        }
-
-        filterChain.doFilter(request, response);
-    }
-
-    private void authenticate(String token) {
-        try {
-            String email = jwtService.extractSubject(token);
-            if (email == null || email.isBlank()) {
-                return;
-            }
-
-            UserDetails user = userService.loadUserByUsername(email);
-            var authentication = UsernamePasswordAuthenticationToken.authenticated(
-                    user,
-                    null,
-                    user.getAuthorities()
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        } catch (JwtException | IllegalArgumentException | UsernameNotFoundException ignored) {
-            // An invalid bearer token leaves the request unauthenticated.
-        }
     }
 }
