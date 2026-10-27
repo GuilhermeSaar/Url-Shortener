@@ -6,7 +6,7 @@
 
 ## Cenário executado
 
-O teste reproduzível está em [`load-test/rnf07-redirect.js`](../load-test/rnf07-redirect.js). Ele executa requisições `GET /{codigo}` contra uma URL curta existente, valida o retorno `302 Found` e a presença do cabeçalho `Location`.
+O teste reproduzível está em [`load-test/RNF07-test.js`](../load-test/RNF07-test.js). Ele executa requisições `GET /{codigo}` contra uma URL curta existente, valida o retorno `302 Found` e a presença do cabeçalho `Location`.
 
 O script usa `redirects: 0`; portanto, a medição termina na resposta do encurtador e não inclui o carregamento da página de destino.
 
@@ -21,7 +21,7 @@ O script usa `redirects: 0`; portanto, a medição termina na resposta do encurt
 Comando de reprodução:
 
 ```bash
-BASE_URL=http://localhost:8080 SHORT_CODE=WXftDz k6 run load-test/rnf07-redirect.js
+BASE_URL=http://localhost:8080 SHORT_CODE=WXftDz k6 run load-test/RNF07-test.js
 ```
 
 ## Resultado

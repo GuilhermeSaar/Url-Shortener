@@ -2,6 +2,8 @@
 
 Protótipo Vue 3 com Composition API (`<script setup>`), Vue Router 4, Pinia, Axios, Vite 7 e Tailwind CSS 4. Implementa os requisitos de `../docs/Requisitos-front.md`.
 
+> **Integração em desenvolvimento:** o backend atual exige JWT em `/api/**`. O frontend ainda não possui cadastro/login nem envia o token; por isso, o painel de estatísticas recebe `401 Unauthorized`. A criação, a cópia e o histórico local permanecem disponíveis. Consulte o [README principal](../README.md) para o estado atual e os exemplos autenticados da API.
+
 ## Executar
 
 Requer Node.js 20.19+ ou 22.12+ e o backend funcionando em `http://localhost:8080`.

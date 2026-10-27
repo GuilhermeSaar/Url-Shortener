@@ -1,5 +1,7 @@
 # Requisitos e Documentação Técnica: Frontend do Encurtador de URL
 
+> **Estado da integração:** este documento descreve o protótipo sem conta. O backend passou a exigir JWT para consultar `/api/**`, e a integração de cadastro/login e envio do token no frontend ainda está pendente. Na configuração atual, o painel recebe `401 Unauthorized`. Consulte o [estado atual do projeto](../README.md#estado-atual).
+
 ## 1. Visão Geral e Escopo
 
 Este documento descreve o protótipo **GS.** conforme a implementação atual em `frontend/`. A interface reúne criação de links e consulta de estatísticas em **uma única tela**, com identidade **clara e fosca**, destaques em verde e histórico em uma gaveta lateral.
