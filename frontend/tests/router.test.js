@@ -1,16 +1,35 @@
 import assert from 'node:assert/strict'
 import { beforeEach, test } from 'node:test'
+import axios from 'axios'
 import { createPinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import { routes, scrollBehavior } from '../src/router/routes.js'
-import { authenticationGuard } from '../src/router/guards.js'
-import { clearAuthToken, setAuthToken } from '../src/services/api.js'
-import { useAuthStore } from '../src/stores/auth.js'
 
-beforeEach(() => clearAuthToken())
+let browserHasSession = false
+
+function response(config, data = undefined) {
+  return Promise.resolve({ config, data, status: 204, statusText: 'No Content', headers: {} })
+}
+
+axios.defaults.adapter = (config) => {
+  if (config.url === '/api/auth/session') {
+    if (browserHasSession) return response(config)
+    return Promise.reject(new axios.AxiosError('Unauthorized', 'ERR_BAD_REQUEST', config, null, { status: 401, data: {} }))
+  }
+  if (config.url === '/logout') {
+    browserHasSession = false
+    return response(config)
+  }
+  throw new Error(`Requisição inesperada: ${config.url}`)
+}
+
+const { routes, scrollBehavior } = await import('../src/router/routes.js')
+const { authenticationGuard } = await import('../src/router/guards.js')
+const { useAuthStore } = await import('../src/stores/auth.js')
+
+beforeEach(() => { browserHasSession = false })
 
 function createTestRouter(authenticated = false) {
-  if (authenticated) setAuthToken('header.payload.signature')
+  browserHasSession = authenticated
   const pinia = createPinia()
   const router = createRouter({
     history: createMemoryHistory(),
@@ -33,7 +52,6 @@ test('a criação é pública e métricas exigem login preservando o código esc
 
 test('endereços antigos chegam às métricas e também respeitam a autenticação', async () => {
   for (const path of ['/stats/aB3xYz', '/?code=aB3xYz']) {
-    clearAuthToken()
     const { router } = createTestRouter()
     await router.push(path)
     assert.equal(router.currentRoute.value.name, 'login')
@@ -60,7 +78,7 @@ test('usuário autenticado acessa as métricas e muda o código na mesma tela', 
 test('sair bloqueia novo acesso às métricas, inclusive pelo histórico de navegação', async () => {
   const { router, auth } = createTestRouter(true)
   await router.push('/stats?code=aB3xYz')
-  auth.signOut()
+  await auth.signOut()
   await router.push('/')
   router.back()
   await new Promise((resolve) => router.afterEach(resolve))

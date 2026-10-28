@@ -16,3 +16,7 @@ security:
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+  cookie:
+    # HTTP local: browsers do not send Secure cookies over localhost without HTTPS.
+    secure: ${COOKIE_SECURE:false}
+    same-site: ${COOKIE_SAME_SITE:Strict}

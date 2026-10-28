@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { createServer as createHttpServer } from 'node:http'
 import { after, before, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
+import axios from 'axios'
 import { createSSRApp } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 import { createPinia } from 'pinia'
@@ -12,8 +13,17 @@ let vite
 let App
 let routes
 let authenticationGuard
-let clearAuthToken
-let setAuthToken
+let browserHasSession = false
+
+axios.defaults.adapter = (config) => {
+  if (config.url === '/api/auth/session') {
+    if (browserHasSession) {
+      return Promise.resolve({ config, data: undefined, status: 204, statusText: 'No Content', headers: {} })
+    }
+    return Promise.reject(new axios.AxiosError('Unauthorized', 'ERR_BAD_REQUEST', config, null, { status: 401, data: {} }))
+  }
+  throw new Error(`Requisição inesperada: ${config.url}`)
+}
 
 before(async () => {
   // Compile the real Vue components without starting an HTTP/WebSocket listener.
@@ -26,16 +36,12 @@ before(async () => {
   App = (await vite.ssrLoadModule('/src/App.vue')).default
   routes = (await vite.ssrLoadModule('/src/router/routes.js')).routes
   authenticationGuard = (await vite.ssrLoadModule('/src/router/guards.js')).authenticationGuard
-  const api = await vite.ssrLoadModule('/src/services/api.js')
-  clearAuthToken = api.clearAuthToken
-  setAuthToken = api.setAuthToken
 })
 
 after(async () => { await vite?.close() })
 
 async function renderPage(url, authenticated = false) {
-  clearAuthToken()
-  if (authenticated) setAuthToken('header.payload.signature')
+  browserHasSession = authenticated
   const pinia = createPinia()
   const router = createRouter({ history: createMemoryHistory(), routes })
   router.beforeEach((to) => authenticationGuard(to, pinia))

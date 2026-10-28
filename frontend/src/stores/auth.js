@@ -1,25 +1,46 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { clearAuthToken, getAuthToken, login, registerUser, setAuthToken } from '../services/api.js'
+import { getSession, login, logout, registerUser } from '../services/api.js'
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref(getAuthToken())
-  const isAuthenticated = computed(() => Boolean(token.value))
+  const authenticated = ref(false)
+  const sessionChecked = ref(false)
+  const isAuthenticated = computed(() => authenticated.value)
 
   async function signIn(email, password) {
-    const receivedToken = await login(email, password)
-    token.value = receivedToken
-    setAuthToken(receivedToken)
+    await login(email, password)
+    authenticated.value = true
+    sessionChecked.value = true
   }
 
   async function signUp(email, password) {
     await registerUser(email, password)
   }
 
-  function signOut() {
-    token.value = null
-    clearAuthToken()
+  async function restoreSession() {
+    if (sessionChecked.value) return isAuthenticated.value
+
+    try {
+      await getSession()
+      authenticated.value = true
+    } catch (error) {
+      if (error?.response?.status !== 401) throw error
+      authenticated.value = false
+    } finally {
+      sessionChecked.value = true
+    }
+
+    return isAuthenticated.value
   }
 
-  return { isAuthenticated, signIn, signOut, signUp }
+  async function signOut() {
+    try {
+      await logout()
+    } finally {
+      authenticated.value = false
+      sessionChecked.value = true
+    }
+  }
+
+  return { isAuthenticated, restoreSession, signIn, signOut, signUp }
 })

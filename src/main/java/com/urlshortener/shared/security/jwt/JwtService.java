@@ -1,4 +1,4 @@
-package com.urlshortener.shared.security;
+package com.urlshortener.shared.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -59,7 +59,7 @@ public class JwtService {
 
             return isNotExpired && isValid;
 
-        } catch (io.jsonwebtoken.ExpiredJwtException | IllegalArgumentException e) {
+        } catch (ExpiredJwtException | IllegalArgumentException e) {
             return false;
         }
     }

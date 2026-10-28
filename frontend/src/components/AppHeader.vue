@@ -7,8 +7,8 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
-function signOut() {
-  auth.signOut()
+async function signOut() {
+  await auth.signOut()
   router.replace({ name: 'home' })
 }
 </script>

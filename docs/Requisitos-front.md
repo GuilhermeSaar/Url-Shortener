@@ -1,6 +1,6 @@
 # Requisitos e Documentação Técnica: Frontend do Encurtador de URL
 
-> **Estado da integração:** o frontend cadastra e autentica usuários. Após o login, mantém o JWT em memória e o envia como `Authorization: Bearer <token>` apenas para `/api/**`, conforme o contrato do Spring Security. Atualizar, fechar ou abrir outra aba exige novo login.
+> **Estado da integração:** o frontend cadastra e autentica usuários. Após o login, a API grava o JWT em cookie `HttpOnly`; o JavaScript não lê nem armazena o token. Ao carregar uma rota, a interface consulta `/api/auth/session` para recuperar a sessão por meio desse cookie.
 
 ## 1. Visão Geral e Escopo
 
@@ -16,7 +16,7 @@ O protótipo utiliza o backend existente, normalmente em `http://localhost:8080`
 | --- | --- |
 | Framework | Vue.js 3, Composition API e `<script setup>` |
 | Roteamento | Vue Router 4, com histórico do navegador |
-| Estado | Pinia 3 e persistência local do histórico |
+| Estado | Pinia 3 para sessão visual e histórico em memória |
 | HTTP | Axios 1, com timeout de 15 segundos |
 | Estilização | Tailwind CSS 4 e CSS próprio em `src/style.css` |
 | Integração do Tailwind | Plugin `@tailwindcss/vite` e `@import "tailwindcss"` |
@@ -49,7 +49,7 @@ As cores e dimensões específicas de cada componente ficam em `frontend/src/sty
 - Apresentação breve: **“Seu link, do início ao clique.”**
 - Painel **Criar**, com a cápsula **“Encurtar link”** e seus estados.
 - Tela autenticada de métricas com painel **Acompanhar** e busca por código ou link curto.
-- Acesso para cadastro/login e indicação discreta de sessão e armazenamento local.
+- Acesso para cadastro/login e indicação discreta de sessão por cookie.
 - Botão flutuante **Histórico** na tela de métricas, com contagem dos links quando houver entradas.
 
 As transições da cápsula e da gaveta respeitam `prefers-reduced-motion`. Não há feedback sonoro implementado.
@@ -77,7 +77,7 @@ O painel fica em `/stats`, acessível após autenticação, e aceita:
 - Seleção pela ação “Estatísticas” do resultado ou de uma entrada do histórico.
 - Abertura de `/stats` com o parâmetro `code` na URL.
 
-Ao selecionar um link pelo histórico, o foco é direcionado ao título do painel, com rolagem quando necessária. Visitantes que tentam acessar a tela são encaminhados ao login antes de consultar a API. Se a API responder `401`, a sessão local é encerrada e o usuário volta ao login, preservando o código.
+Ao selecionar um link pelo histórico, o foco é direcionado ao título do painel, com rolagem quando necessária. Visitantes que tentam acessar a tela são encaminhados ao login antes de consultar a API. Se a API responder `401`, o cookie é removido e o usuário volta ao login, preservando o código.
 
 | Estado | Comportamento |
 | --- | --- |
@@ -114,25 +114,24 @@ O histórico:
 - Mantém até **20 links recentes**, em ordem de criação local, com novas entradas no início.
 - Fica somente em memória, por meio da store Pinia.
 - Armazena URL curta, URL original, código e data local da criação da entrada.
-- Evita duplicação pela URL curta e valida as entradas recuperadas do armazenamento.
+- Evita duplicação pela URL curta.
 - Exibe link curto, destino original e data, com ações de abrir o link curto, copiar e consultar estatísticas.
 - Fecha a gaveta e carrega o painel de métricas ao selecionar “Estatísticas”, sem trocar de página.
 - Apresenta um estado vazio com ação para iniciar a criação do primeiro link.
-- Continua funcionando em memória se não conseguir persistir os dados, com aviso na gaveta.
 
 Esse histórico não é uma listagem fornecida pelo backend e não é sincronizado entre dispositivos. A implementação não oferece exclusão individual de entradas nem limpeza do histórico pela interface.
 
 ### 4.5 Autenticação
 
-O botão **Entrar** abre `/entrar`, com os fluxos de cadastro e login. O cadastro envia `POST /register`; o login envia `POST /login` e valida a resposta `token` antes de mantê-la em memória. Após o login, o usuário segue para as métricas do código escolhido, quando houver. Atualizar, fechar ou abrir outra aba exige novo login. Ao sair, o token é descartado e o usuário retorna à home.
+O botão **Entrar** abre `/entrar`, com os fluxos de cadastro e login. O cadastro envia `POST /register`; um login válido em `POST /login` devolve somente o cookie `HttpOnly`. Após o login, o usuário segue para as métricas do código escolhido, quando houver. Ao atualizar ou abrir outra aba, o guard consulta `GET /api/auth/session` e restaura o estado visual caso o cookie ainda seja válido. Ao sair, `POST /logout` expira o cookie e o usuário retorna à home.
 
-As consultas a `/api/**` incluem o cabeçalho `Authorization: Bearer <token>`. As chamadas públicas (`/shorten`, `/register` e `/login`) não recebem esse cabeçalho. Se o armazenamento não estiver disponível, o token fica apenas em memória até a página ser fechada.
+As chamadas Axios usam `withCredentials: true`, sem cabeçalho `Authorization` e sem `localStorage` ou `sessionStorage`. O navegador envia o cookie automaticamente nas chamadas autorizadas.
 
 ## 5. Integração com o Backend
 
 ### 5.1 Endereçamento e Requisições
 
-Em desenvolvimento, as chamadas usam caminhos relativos e passam pelo proxy do Vite para `http://localhost:8080`: `/shorten`, `/register`, `/login` e `/api`. A variável `VITE_API_BASE_URL` permite configurar outra base da API na compilação.
+Em desenvolvimento, as chamadas usam caminhos relativos e passam pelo proxy do Vite para `http://localhost:8080`: `/shorten`, `/register`, `/login`, `/logout` e `/api`. A variável `VITE_API_BASE_URL` permite configurar outra base da API na compilação.
 
 O cliente utiliza `Accept: application/json`, envia o corpo de criação como JSON e limita as requisições a 15 segundos.
 
@@ -164,7 +163,7 @@ Para erros `400`, as mensagens válidas de `errors` referentes ao campo `url` ap
 
 **Endpoints:** `POST /register` e `POST /login`
 
-Os dois endpoints recebem JSON com `email` e `password`; o login devolve `{ "token": "<jwt>" }`. O cliente só aceita um JWT com três segmentos Base64URL antes de usá-lo e o mantém em memória. O cabeçalho Bearer é acrescentado pelo interceptor do Axios exclusivamente para caminhos iniciados por `/api/`.
+Os dois endpoints recebem JSON com `email` e `password`. Um login válido responde com `Set-Cookie` contendo o JWT `HttpOnly`, portanto o token não aparece no corpo da resposta nem fica acessível ao JavaScript. `POST /logout` responde expirando esse mesmo cookie; `GET /api/auth/session` responde `204` quando o cookie representa uma sessão válida.
 
 ### 5.4 Consultar Estatísticas
 
@@ -212,7 +211,7 @@ Consultar estatísticas não acessa o redirecionamento. Abrir a URL de destino e
 | `/?code=aB3xYz` e `/stats/aB3xYz` | Encaminham para `/stats?code=aB3xYz`, exigindo autenticação |
 | Caminhos desconhecidos do frontend | Redirecionam para `/` |
 
-As telas usam `HomeView`, `AuthView` e `StatsView`. A proteção de navegação impede abrir as métricas sem uma sessão local; o Spring Security valida o JWT nas requisições à API.
+As telas usam `HomeView`, `AuthView` e `StatsView`. A proteção de navegação consulta a sessão por cookie antes de abrir as métricas; o Spring Security valida o JWT nas requisições à API.
 
 Selecionar ou buscar um código atualiza o parâmetro `code` com `router.replace`, sem criar um passo adicional no histórico de navegação e sem voltar automaticamente ao topo. Trocar de tela volta ao topo.
 
@@ -270,6 +269,7 @@ export default defineConfig({
       '/shorten': { target: 'http://localhost:8080', changeOrigin: true },
       '/register': { target: 'http://localhost:8080', changeOrigin: true },
       '/login': { target: 'http://localhost:8080', changeOrigin: true },
+      '/logout': { target: 'http://localhost:8080', changeOrigin: true },
       '/api': { target: 'http://localhost:8080', changeOrigin: true },
     },
   },

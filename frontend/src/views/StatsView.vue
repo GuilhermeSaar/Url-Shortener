@@ -21,7 +21,7 @@ function showStats(link) {
   <div class="workspace workspace-single workspace-metrics">
     <div class="workspace-intro"><p class="workspace-eyebrow">CADA LINK TEM UMA HISTÓRIA.</p><h1>Conheça o alcance dos seus links<span class="brand-dot">.</span></h1><p>Consulte os cliques, a data de criação e o destino de um link.</p></div>
     <StatsPanel ref="statsPanel" />
-    <p class="workspace-footnote"><LockKeyhole :size="12" /> Seu histórico continua salvo apenas neste navegador.</p>
+    <p class="workspace-footnote"><LockKeyhole :size="12" /> Seu histórico fica disponível somente nesta aba.</p>
   </div>
 
   <button type="button" class="history-trigger" aria-haspopup="dialog" :aria-expanded="historyOpen" aria-controls="history-drawer" @click="drawer.open()">

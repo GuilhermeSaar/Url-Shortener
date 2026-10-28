@@ -5,7 +5,7 @@ import axios from 'axios'
 // Exercise the real Axios request/response pipeline without a running backend.
 let respond
 axios.defaults.adapter = (config) => respond(config)
-const { clearAuthToken, getUrlStats, login, setAuthToken, shortenUrl, errorMessage } = await import('../src/services/api.js')
+const { getSession, getUrlStats, login, logout, shortenUrl, errorMessage } = await import('../src/services/api.js')
 
 function response(config, data) {
   return Promise.resolve({ config, data, status: 200, statusText: 'OK', headers: {} })
@@ -44,27 +44,36 @@ test('consulta usa o endpoint correto sem consumir o redirecionamento', async ()
   assert.deepEqual(await getUrlStats('aB3xYz'), stats)
 })
 
-test('consulta protegida envia o JWT em memória como Bearer e não o envia ao login', async () => {
-  const token = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZXZAZXhhbXBsZS5jb20ifQ.signature'
-  setAuthToken(token)
-  try {
-    respond = (config) => {
-      assert.equal(config.url, '/api/url/aB3xYz')
-      assert.equal(config.headers.get('Authorization'), `Bearer ${token}`)
-      return response(config, { clickCount: 7, date: '2026-10-19T12:00:00', urlOriginal: 'https://example.com/article' })
-    }
-    await getUrlStats('aB3xYz')
-
-    respond = (config) => {
-      assert.equal(config.url, '/login')
-      assert.equal(config.headers.get('Authorization'), undefined)
-      assert.deepEqual(JSON.parse(config.data), { email: 'dev@example.com', password: 'password123' })
-      return response(config, { token })
-    }
-    assert.equal(await login('dev@example.com', 'password123'), token)
-  } finally {
-    clearAuthToken()
+test('autenticação usa cookies HttpOnly, sem expor JWT ao JavaScript', async () => {
+  respond = (config) => {
+    assert.equal(config.url, '/api/url/aB3xYz')
+    assert.equal(config.withCredentials, true)
+    assert.equal(config.headers.get('Authorization'), undefined)
+    return response(config, { clickCount: 7, date: '2026-10-19T12:00:00', urlOriginal: 'https://example.com/article' })
   }
+  await getUrlStats('aB3xYz')
+
+  respond = (config) => {
+    assert.equal(config.url, '/login')
+    assert.equal(config.withCredentials, true)
+    assert.equal(config.headers.get('Authorization'), undefined)
+    assert.deepEqual(JSON.parse(config.data), { email: 'dev@example.com', password: 'password123' })
+    return response(config)
+  }
+  await login('dev@example.com', 'password123')
+
+  respond = (config) => {
+    assert.equal(config.url, '/api/auth/session')
+    return response(config)
+  }
+  await getSession()
+
+  respond = (config) => {
+    assert.equal(config.url, '/logout')
+    assert.equal(config.method, 'post')
+    return response(config)
+  }
+  await logout()
 })
 
 test('404 preserva o status para o estado visual de link não encontrado', async () => {

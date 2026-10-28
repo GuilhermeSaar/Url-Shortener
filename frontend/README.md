@@ -2,7 +2,7 @@
 
 Protótipo Vue 3 com Composition API (`<script setup>`), Vue Router 4, Pinia, Axios, Vite 7 e Tailwind CSS 4. Implementa os requisitos de `../docs/Requisitos-front.md`.
 
-> O frontend cadastra e autentica usuários pela própria interface. Após o login, o JWT fica somente em memória e é enviado a `/api/**` como `Authorization: Bearer <token>`, que é o contrato do Spring Security. Atualizar a página, fechar a aba ou abrir uma nova aba exige novo login.
+> O frontend cadastra e autentica usuários pela própria interface. Após o login, a API grava o JWT em um cookie `HttpOnly`; o JavaScript não recebe nem armazena o token. Ao abrir ou atualizar a página, a interface consulta a sessão com o cookie para recuperar o estado autenticado.
 
 ## Executar
 
@@ -26,9 +26,9 @@ Abra o endereço exibido pelo Vite (normalmente `http://localhost:5173`). As cha
 
 Na tela inicial, clique em **Encurtar link** para abrir o campo com foco automático. **Enter** envia e **Esc** recolhe a cápsula preservando o texto ou resultado; durante o envio, aguarde a conclusão. Com o resultado ativo e o foco na cápsula, **Espaço** copia o link quando o foco está fora de campos, links e botões. Na tela de métricas, o botão **Histórico** abre uma gaveta modal com cópia, acesso ao link e estatísticas; **Esc** ou um clique fora dela fecha o painel. As animações respeitam a preferência por movimento reduzido.
 
-Criar um link não consulta estatísticas. A ação **Ver métricas** abre a tela autenticada; visitantes passam por login/cadastro, preservando o código escolhido. Nessa tela, é possível buscar por código ou URL curta e selecionar **Estatísticas** no histórico. O painel mostra cliques, data de criação e destino, com atualização manual e estados de carregamento, erro e link não encontrado. Ao sair, o usuário volta à home. Uma resposta `401` nas métricas encerra a sessão local e solicita novo login.
+Criar um link não consulta estatísticas. A ação **Ver métricas** abre a tela autenticada; visitantes passam por login/cadastro, preservando o código escolhido. Nessa tela, é possível buscar por código ou URL curta e selecionar **Estatísticas** no histórico. O painel mostra cliques, data de criação e destino, com atualização manual e estados de carregamento, erro e link não encontrado. Ao sair, o usuário volta à home. Uma resposta `401` remove a sessão do estado visual e solicita novo login.
 
-O histórico e o token de sessão ficam apenas em memória. Eles existem enquanto a aba permanece aberta e são descartados ao atualizar a página, fechar a aba ou abrir o app em outra aba. O histórico não representa uma listagem do backend. A data do histórico é a data local de criação da entrada; o painel de estatísticas usa a data devolvida pela API.
+O histórico fica apenas em memória. Ele existe enquanto a aba permanece aberta e é descartado ao atualizar a página, fechar a aba ou abrir o app em outra aba. A sessão é mantida pelo cookie `HttpOnly` e pode continuar válida entre recarregamentos até expirar ou o usuário sair. O histórico não representa uma listagem do backend. A data do histórico é a data local de criação da entrada; o painel de estatísticas usa a data devolvida pela API.
 
 ## Organização
 
@@ -51,9 +51,9 @@ npm run build
 npm run preview
 ```
 
-`build` gera `dist/`. O proxy é exclusivo do servidor de desenvolvimento: `preview` apenas permite inspecionar os arquivos compilados. Em produção, encaminhe `/shorten`, `/login`, `/register` e `/api` à API pelo servidor HTTP ou defina `VITE_API_BASE_URL` na compilação (copie `.env.example` para `.env.local`). Uma API em outra origem precisa permitir CORS. Variáveis `VITE_*` são públicas.
+`build` gera `dist/`. O proxy é exclusivo do servidor de desenvolvimento: `preview` apenas permite inspecionar os arquivos compilados. Em produção, encaminhe `/shorten`, `/login`, `/logout`, `/register` e `/api` à API pelo servidor HTTP ou defina `VITE_API_BASE_URL` na compilação (copie `.env.example` para `.env.local`). Uma API em outra origem precisa permitir CORS com credenciais. Variáveis `VITE_*` são públicas.
 
-O servidor que hospedar o frontend deve entregar `index.html` para rotas como `/stats/aB3xYz`. O redirecionamento `/{code}` permanece sob responsabilidade do backend; a publicação conjunta no Spring Boot exigirá definir esse roteamento e a integração do build. O backend e o build Maven não foram alterados.
+O servidor que hospedar o frontend deve entregar `index.html` para rotas como `/stats/aB3xYz`. O redirecionamento `/{code}` permanece sob responsabilidade do backend; a publicação conjunta no Spring Boot exigirá definir esse roteamento e a integração do build.
 
 O Tailwind 4 usa o plugin oficial `@tailwindcss/vite` e a importação no CSS, sem configuração PostCSS adicional: https://tailwindcss.com/docs/installation/using-vite.
 
@@ -63,7 +63,7 @@ A integração segue `docs/Requisitos-front.md`, conferido com os controllers Ja
 
 - `POST /shorten` envia `{ "url": "https://example.com" }` como JSON e lê a URL completa de `response`. Os erros `400` do campo `url` aparecem no formulário; falhas sem esse JSON recebem uma mensagem genérica.
 - `GET /api/url/{code}` devolve `date`, `clickCount` e `urlOriginal`. `404` exibe o estado de link inexistente/expirado. Respostas incompletas recebem mensagem de erro em vez de exibir métricas inválidas.
-- `POST /register` e `POST /login` enviam e-mail e senha como JSON. Um login válido armazena o JWT; cada chamada a `/api/**` o envia no cabeçalho `Authorization: Bearer <token>`.
+- `POST /register` e `POST /login` enviam e-mail e senha como JSON. Um login válido responde com o cookie `HttpOnly`; o navegador o envia nas chamadas seguintes a `/api/**`.
 - A API não devolve código ou URL curta nas estatísticas. Para abrir/copiar esse link, a tela utiliza a URL informada na busca ou aquela existente no histórico local. Não deduzimos o domínio público a partir do código.
 - A API não informa expiração, não distingue link expirado de inexistente no `404` e não oferece listagem de links. O histórico local pode conter links que já não existem.
 - `date` não tem fuso horário; o frontend formata a data recebida sem presumir que seja UTC. `clickCount` deve caber em um inteiro seguro do JavaScript para ser exibido sem perda de precisão.

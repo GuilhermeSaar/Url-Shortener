@@ -22,7 +22,7 @@ O projeto reúne estudos práticos de APIs REST, autenticação, persistência r
 | Expiração de links | Data de 90 dias persistida; bloqueio de links expirados e ativação da limpeza agendada pendentes. |
 | Infraestrutura local | PostgreSQL disponível pelo Docker Compose e Dockerfile para a API. A composição completa dos serviços está pendente. |
 
-Após o login pela interface, o frontend armazena o JWT localmente e o envia como `Authorization: Bearer <token>` apenas nas chamadas a `/api/**`, conforme exigido pelo filtro de segurança.
+Após o login pela interface, a API envia o JWT em um cookie `HttpOnly`. O navegador o encaminha nas chamadas a `/api/**`; o frontend não lê, armazena ou monta o token manualmente.
 
 ## Tecnologias
 
@@ -135,8 +135,10 @@ Base local: `http://localhost:8080`.
 | `POST` | `/shorten` | Público | `201` com a URL curta |
 | `GET` | `/{code}` | Público | `302` para o destino original |
 | `POST` | `/register` | Público | `201` com cadastro concluído |
-| `POST` | `/login` | Público | `200` com o token JWT |
-| `GET` | `/api/url/{code}` | Bearer JWT | `200` com estatísticas |
+| `POST` | `/login` | Público | `200` com cookie `HttpOnly` |
+| `POST` | `/logout` | Público | `204` e remoção do cookie |
+| `GET` | `/api/auth/session` | Cookie JWT | `204` quando autenticado |
+| `GET` | `/api/url/{code}` | Cookie JWT | `200` com estatísticas |
 
 ### Criar um link
 
@@ -173,14 +175,15 @@ curl -i http://localhost:8080/register \
 
 curl -i http://localhost:8080/login \
   -H 'Content-Type: application/json' \
+  -c cookies.txt \
   -d '{"email":"dev@example.com","password":"senha-exemplo-123"}'
 ```
 
-O login devolve o token no campo `token`. Utilize seu valor no cabeçalho da consulta:
+O login devolve o JWT em um cookie `HttpOnly`. Para testar pela linha de comando, preserve o cookie entre as chamadas:
 
 ```bash
 curl -i http://localhost:8080/api/url/aB3xYz \
-  -H 'Authorization: Bearer COLE_O_TOKEN_AQUI'
+  -b cookies.txt
 ```
 
 Exemplo de corpo da resposta:

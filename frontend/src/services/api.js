@@ -3,39 +3,13 @@ import { extractCode, isHttpUrl } from '../utils/links.js'
 
 class InvalidApiResponse extends Error {}
 
-let authToken = null
-
-function isJwt(token) {
-  return typeof token === 'string' && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)
-}
-
-export function getAuthToken() {
-  return authToken
-}
-
-export function setAuthToken(token) {
-  if (!isJwt(token)) throw new InvalidApiResponse()
-  authToken = token
-}
-
-export function clearAuthToken() {
-  authToken = null
-}
-
 const api = axios.create({
   baseURL: import.meta.env?.VITE_API_BASE_URL || '',
   timeout: 15000,
   headers: { Accept: 'application/json' },
-})
-
-// Spring Security's JwtFilter only authenticates the Bearer token on /api/**.
-api.interceptors.request.use((config) => {
-  if (!config.url?.startsWith('/api/')) return config
-  const token = getAuthToken()
-  if (!token) return config
-  if (typeof config.headers?.set === 'function') config.headers.set('Authorization', `Bearer ${token}`)
-  else config.headers = { ...config.headers, Authorization: `Bearer ${token}` }
-  return config
+  // Necessário quando VITE_API_BASE_URL aponta diretamente para outra origem.
+  // Com o proxy do Vite em desenvolvimento, o cookie já segue no mesmo site.
+  withCredentials: true,
 })
 
 export async function registerUser(email, password) {
@@ -43,9 +17,15 @@ export async function registerUser(email, password) {
 }
 
 export async function login(email, password) {
-  const { data } = await api.post('/login', { email, password })
-  if (!isJwt(data?.token)) throw new InvalidApiResponse()
-  return data.token
+  await api.post('/login', { email, password })
+}
+
+export async function getSession() {
+  await api.get('/api/auth/session')
+}
+
+export async function logout() {
+  await api.post('/logout')
 }
 
 export async function shortenUrl(url) {

@@ -1,8 +1,10 @@
 package com.urlshortener.user.service;
 
-import com.urlshortener.shared.security.JwtService;
+import com.urlshortener.shared.security.cookie.CookieUtil;
+import com.urlshortener.shared.security.jwt.JwtService;
 import com.urlshortener.user.dto.LoginRequest;
 import com.urlshortener.user.model.UserModel;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,6 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,13 +31,19 @@ class AuthServiceTest {
     private JwtService jwtService;
 
     @Mock
+    private CookieUtil cookieUtil;
+
+    @Mock
+    private HttpServletResponse httpResponse;
+
+    @Mock
     private Authentication authentication;
 
     @InjectMocks
     private AuthService service;
 
     @Test
-    void shouldReturnJwtForValidCredentials() {
+    void shouldSetJwtCookieForValidCredentials() {
         var user = new UserModel();
         user.setEmail("user@example.com");
         user.setPassword("hashed-password");
@@ -43,11 +53,13 @@ class AuthServiceTest {
                 .thenReturn(authentication);
         when(authentication.getPrincipal()).thenReturn(user);
         when(jwtService.generateToken(user)).thenReturn("jwt-token");
+        var cookie = ResponseCookie.from("accessToken", "jwt-token").httpOnly(true).build();
+        when(cookieUtil.generateJwtCookie("jwt-token")).thenReturn(cookie);
 
-        var response = service.login(request);
+        service.login(request, httpResponse);
 
-        assertThat(response.token()).isEqualTo("jwt-token");
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(jwtService).generateToken(user);
+        verify(httpResponse).addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }

@@ -1,13 +1,17 @@
-package com.urlshortener.shared.security;
+package com.urlshortener.shared.security.jwt;
 
+import com.urlshortener.shared.security.cookie.CookieUtil;
 import com.urlshortener.user.service.UserDetailService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -20,19 +24,20 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwt;
     private final UserDetailService service;
+    private final CookieUtil cookieUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        final var authHeader = request.getHeader("Authorization");
+        var token = cookieUtil.recoverTokenFromCookie(request);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            var token = authHeader.substring(7);
+
             var userEmail = jwt.extractSubject(token);
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -45,10 +50,13 @@ public class JwtFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }
-        } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        } catch (JwtException | IllegalArgumentException | UsernameNotFoundException e) {
+            SecurityContextHolder.clearContext();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookieUtil.clearJwtCookie().toString());
+            filterChain.doFilter(request, response);
             return;
         }
+
         filterChain.doFilter(request, response);
     }
 }
