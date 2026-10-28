@@ -3,11 +3,50 @@ import { extractCode, isHttpUrl } from '../utils/links.js'
 
 class InvalidApiResponse extends Error {}
 
+let authToken = null
+
+function isJwt(token) {
+  return typeof token === 'string' && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)
+}
+
+export function getAuthToken() {
+  return authToken
+}
+
+export function setAuthToken(token) {
+  if (!isJwt(token)) throw new InvalidApiResponse()
+  authToken = token
+}
+
+export function clearAuthToken() {
+  authToken = null
+}
+
 const api = axios.create({
   baseURL: import.meta.env?.VITE_API_BASE_URL || '',
   timeout: 15000,
   headers: { Accept: 'application/json' },
 })
+
+// Spring Security's JwtFilter only authenticates the Bearer token on /api/**.
+api.interceptors.request.use((config) => {
+  if (!config.url?.startsWith('/api/')) return config
+  const token = getAuthToken()
+  if (!token) return config
+  if (typeof config.headers?.set === 'function') config.headers.set('Authorization', `Bearer ${token}`)
+  else config.headers = { ...config.headers, Authorization: `Bearer ${token}` }
+  return config
+})
+
+export async function registerUser(email, password) {
+  await api.post('/register', { email, password })
+}
+
+export async function login(email, password) {
+  const { data } = await api.post('/login', { email, password })
+  if (!isJwt(data?.token)) throw new InvalidApiResponse()
+  return data.token
+}
 
 export async function shortenUrl(url) {
   const { data } = await api.post('/shorten', { url })
@@ -37,7 +76,9 @@ export function errorMessage(error, field) {
       .map((item) => item.message).filter((message) => typeof message === 'string' && message.trim())
     if (messages.length) return messages.join(' ')
   }
-  if (error?.response?.status === 400) return 'Os dados enviados são inválidos. Confira o endereço e tente novamente.'
+  if (error?.response?.status === 400) return 'Os dados enviados são inválidos. Confira os dados e tente novamente.'
+  if (error?.response?.status === 401) return 'Sua sessão não é válida ou expirou. Entre novamente para consultar as estatísticas.'
+  if (error?.response?.status === 409) return 'Este e-mail já possui uma conta. Entre para continuar.'
   if (error?.response?.status === 404) return 'Link não encontrado. Ele pode não existir ou já ter expirado.'
   if (error?.code === 'ECONNABORTED' || error?.code === 'ETIMEDOUT') return 'O servidor demorou a responder. Tente novamente.'
   if (!error?.response || error.response.status >= 500) return 'Não foi possível conectar ao serviço. Tente novamente em instantes.'

@@ -1,12 +1,9 @@
 package com.urlshortener.user.model;
 
 import com.urlshortener.url.model.UrlModel;
-import com.urlshortener.user.domain.RoleUser;
+import com.urlshortener.user.model.enums.RoleUser;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

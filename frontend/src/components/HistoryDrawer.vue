@@ -46,7 +46,6 @@ defineExpose({ open })
       <button type="button" class="capsule-close" aria-label="Fechar histórico" autofocus @click="close"><X :size="19" /></button>
     </div>
     <p id="history-description" class="drawer-description">{{ history.links.length ? `Seus últimos ${history.links.length} links, sempre à mão.` : 'Seus links recentes, sempre à mão.' }}</p>
-    <p v-if="history.storageWarning" role="status" class="drawer-warning">{{ history.storageWarning }}</p>
     <div class="drawer-body">
       <div v-if="!history.links.length" class="drawer-empty">
         <span class="drawer-empty-icon"><Link2 :size="25" /></span>

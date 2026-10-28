@@ -2,7 +2,7 @@
 
 Protótipo Vue 3 com Composition API (`<script setup>`), Vue Router 4, Pinia, Axios, Vite 7 e Tailwind CSS 4. Implementa os requisitos de `../docs/Requisitos-front.md`.
 
-> **Integração em desenvolvimento:** o backend atual exige JWT em `/api/**`. O frontend ainda não possui cadastro/login nem envia o token; por isso, o painel de estatísticas recebe `401 Unauthorized`. A criação, a cópia e o histórico local permanecem disponíveis. Consulte o [README principal](../README.md) para o estado atual e os exemplos autenticados da API.
+> O frontend cadastra e autentica usuários pela própria interface. Após o login, o JWT fica somente em memória e é enviado a `/api/**` como `Authorization: Bearer <token>`, que é o contrato do Spring Security. Atualizar a página, fechar a aba ou abrir uma nova aba exige novo login.
 
 ## Executar
 
@@ -14,30 +14,32 @@ npm install
 npm run dev
 ```
 
-Abra o endereço exibido pelo Vite (normalmente `http://localhost:5173`). As chamadas a `/shorten` e `/api` são encaminhadas ao backend por proxy. `changeOrigin: true` permite que a URL curta gerada use a origem do backend, onde o redirecionamento funciona. Os links curtos abrem com `<a>` e não passam pelo Vue Router.
+Abra o endereço exibido pelo Vite (normalmente `http://localhost:5173`). As chamadas a `/shorten`, `/login`, `/register` e `/api` são encaminhadas ao backend por proxy. `changeOrigin: true` permite que a URL curta gerada use a origem do backend, onde o redirecionamento funciona. Os links curtos abrem com `<a>` e não passam pelo Vue Router.
 
 ## Rotas e recursos
 
-- `/`: tela única com cápsula expansível para criar links, painel de estatísticas e histórico dos últimos 20 links em uma gaveta lateral. Toda a interface segue a identidade clara e fosca.
-- `/?code=aB3xYz`: seleciona um link no painel da própria home. Os endereços antigos `/stats` e `/stats/:code` redirecionam para essa mesma tela.
+- `/`: tela pública com a cápsula expansível para criar e copiar links.
+- `/entrar`: tela de login e cadastro para acessar as métricas.
+- `/stats`: tela autenticada com painel de estatísticas e histórico dos últimos 20 links em uma gaveta lateral.
+- `/stats?code=aB3xYz`: seleciona um link no painel de métricas. Os endereços antigos `/?code=aB3xYz` e `/stats/aB3xYz` encaminham para essa tela, passando pelo login quando necessário.
 - Navegação adaptada para celular, foco visível, labels e mensagens acessíveis.
 
-Na tela inicial, clique em **Encurtar link** para abrir o campo com foco automático. **Enter** envia e **Esc** recolhe a cápsula preservando o texto ou resultado; durante o envio, aguarde a conclusão. Com o resultado ativo e o foco na cápsula, **Espaço** copia o link quando o foco está fora de campos, links e botões. O botão **Histórico** abre uma gaveta modal com cópia, acesso ao link e estatísticas; **Esc** ou um clique fora dela fecha o painel. As animações respeitam a preferência por movimento reduzido. Não há feedback sonoro.
+Na tela inicial, clique em **Encurtar link** para abrir o campo com foco automático. **Enter** envia e **Esc** recolhe a cápsula preservando o texto ou resultado; durante o envio, aguarde a conclusão. Com o resultado ativo e o foco na cápsula, **Espaço** copia o link quando o foco está fora de campos, links e botões. Na tela de métricas, o botão **Histórico** abre uma gaveta modal com cópia, acesso ao link e estatísticas; **Esc** ou um clique fora dela fecha o painel. As animações respeitam a preferência por movimento reduzido.
 
-Ao criar um link, o painel ao lado consulta suas estatísticas automaticamente. Também é possível buscar por código ou URL curta e selecionar **Estatísticas** no histórico, sem trocar de página. O painel mostra cliques, data de criação e destino, com atualização manual e estados de carregamento, erro e link não encontrado. Antes de consultar um link, as métricas aparecem como traços, sem dados fictícios. No celular, criação e estatísticas se organizam em uma coluna.
+Criar um link não consulta estatísticas. A ação **Ver métricas** abre a tela autenticada; visitantes passam por login/cadastro, preservando o código escolhido. Nessa tela, é possível buscar por código ou URL curta e selecionar **Estatísticas** no histórico. O painel mostra cliques, data de criação e destino, com atualização manual e estados de carregamento, erro e link não encontrado. Ao sair, o usuário volta à home. Uma resposta `401` nas métricas encerra a sessão local e solicita novo login.
 
-O Pinia grava o histórico com a chave `elo:link-history:v1` no `localStorage`. Os dados ficam neste navegador e não representam uma listagem do backend. A data do histórico é a data local de criação da entrada; o painel de estatísticas usa a data devolvida pela API. A aplicação continua funcionando se o armazenamento estiver indisponível.
+O histórico e o token de sessão ficam apenas em memória. Eles existem enquanto a aba permanece aberta e são descartados ao atualizar a página, fechar a aba ou abrir o app em outra aba. O histórico não representa uma listagem do backend. A data do histórico é a data local de criação da entrada; o painel de estatísticas usa a data devolvida pela API.
 
 ## Organização
 
 ```text
 src/
-  components/   # Cópia, painel de estatísticas e gaveta de histórico
-  router/       # Rotas da aplicação
+  components/   # Cabeçalho, cópia, painel de estatísticas e gaveta de histórico
+  router/       # Rotas e proteção de acesso às métricas
   services/     # Axios e tratamento de erros da API
   stores/       # Histórico local em Pinia
   utils/        # Validação, códigos e datas
-  views/        # HomeView: espaço único para criar e acompanhar
+  views/        # HomeView, AuthView e StatsView
   App.vue       # Estrutura da aplicação
   style.css     # Tailwind e identidade visual
 ```
@@ -49,7 +51,7 @@ npm run build
 npm run preview
 ```
 
-`build` gera `dist/`. O proxy é exclusivo do servidor de desenvolvimento: `preview` apenas permite inspecionar os arquivos compilados. Em produção, encaminhe `/shorten` e `/api` à API pelo servidor HTTP ou defina `VITE_API_BASE_URL` na compilação (copie `.env.example` para `.env.local`). Uma API em outra origem precisa permitir CORS. Variáveis `VITE_*` são públicas.
+`build` gera `dist/`. O proxy é exclusivo do servidor de desenvolvimento: `preview` apenas permite inspecionar os arquivos compilados. Em produção, encaminhe `/shorten`, `/login`, `/register` e `/api` à API pelo servidor HTTP ou defina `VITE_API_BASE_URL` na compilação (copie `.env.example` para `.env.local`). Uma API em outra origem precisa permitir CORS. Variáveis `VITE_*` são públicas.
 
 O servidor que hospedar o frontend deve entregar `index.html` para rotas como `/stats/aB3xYz`. O redirecionamento `/{code}` permanece sob responsabilidade do backend; a publicação conjunta no Spring Boot exigirá definir esse roteamento e a integração do build. O backend e o build Maven não foram alterados.
 
@@ -61,6 +63,7 @@ A integração segue `docs/Requisitos-front.md`, conferido com os controllers Ja
 
 - `POST /shorten` envia `{ "url": "https://example.com" }` como JSON e lê a URL completa de `response`. Os erros `400` do campo `url` aparecem no formulário; falhas sem esse JSON recebem uma mensagem genérica.
 - `GET /api/url/{code}` devolve `date`, `clickCount` e `urlOriginal`. `404` exibe o estado de link inexistente/expirado. Respostas incompletas recebem mensagem de erro em vez de exibir métricas inválidas.
+- `POST /register` e `POST /login` enviam e-mail e senha como JSON. Um login válido armazena o JWT; cada chamada a `/api/**` o envia no cabeçalho `Authorization: Bearer <token>`.
 - A API não devolve código ou URL curta nas estatísticas. Para abrir/copiar esse link, a tela utiliza a URL informada na busca ou aquela existente no histórico local. Não deduzimos o domínio público a partir do código.
 - A API não informa expiração, não distingue link expirado de inexistente no `404` e não oferece listagem de links. O histórico local pode conter links que já não existem.
 - `date` não tem fuso horário; o frontend formata a data recebida sem presumir que seja UTC. `clickCount` deve caber em um inteiro seguro do JavaScript para ser exibido sem perda de precisão.
@@ -75,4 +78,4 @@ npm test
 npm run build
 ```
 
-Os testes usam o pipeline real do Axios com um adapter controlado para verificar payload, endpoints, respostas `400`/`404`, cancelamento e formatos inesperados. Também renderizam a home a partir de `App.vue` sem código selecionado ou com código inválido, e verificam o redirecionamento das URLs antigas e a seleção de links sem trocar de tela ou reiniciar a rolagem. Eles não substituem uma verificação no navegador e com o backend e o PostgreSQL em execução.
+Os testes usam o pipeline real do Axios com um adapter controlado para verificar payload, endpoints, respostas `400`/`404`, cancelamento e formatos inesperados. Também renderizam as telas reais e verificam a separação da criação e das métricas, a proteção das rotas, a preservação do código no login e o bloqueio após logout. A integração real depende do backend e do PostgreSQL em execução.

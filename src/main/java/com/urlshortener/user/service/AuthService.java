@@ -1,14 +1,13 @@
 package com.urlshortener.user.service;
 
-import com.urlshortener.user.exception.FailedRetrieveAuthenticatedException;
 import com.urlshortener.shared.security.JwtService;
 import com.urlshortener.user.dto.LoginRequest;
 import com.urlshortener.user.dto.TokenResponse;
+import com.urlshortener.user.exception.FailedRetrieveAuthenticatedException;
 import com.urlshortener.user.model.UserModel;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @AllArgsConstructor
@@ -20,7 +19,7 @@ public class AuthService {
 
     public TokenResponse login(LoginRequest request) {
 
-        Authentication auth = authentication.authenticate(
+        var auth = authentication.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 

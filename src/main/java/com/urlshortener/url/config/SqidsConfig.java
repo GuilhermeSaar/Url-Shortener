@@ -1,5 +1,6 @@
 package com.urlshortener.url.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.sqids.Sqids;
@@ -8,11 +9,10 @@ import org.sqids.Sqids;
 public class SqidsConfig {
 
     @Bean
-    public Sqids sqids() {
-        String BASE_62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    public Sqids sqids(@Value("${SQIDS_ALPHABET}") String alphabet) {
         return Sqids.builder()
                 .minLength(6)
-                .alphabet(BASE_62)
+                .alphabet(alphabet)
                 .build();
     }
 }

@@ -1,9 +1,7 @@
 <script setup>
 import { nextTick, onUnmounted, ref } from 'vue'
-import { ArrowRight, ArrowUpRight, BarChart3, Check, CornerDownLeft, ExternalLink, GalleryVerticalEnd, Link2, LoaderCircle, LockKeyhole, Plus, X } from 'lucide-vue-next'
+import { ArrowRight, ArrowUpRight, BarChart3, Check, CornerDownLeft, ExternalLink, Link2, LoaderCircle, LockKeyhole, Plus, X } from 'lucide-vue-next'
 import CopyButton from '../components/CopyButton.vue'
-import HistoryDrawer from '../components/HistoryDrawer.vue'
-import StatsPanel from '../components/StatsPanel.vue'
 import { useHistoryStore } from '../stores/history'
 import { errorMessage, shortenUrl } from '../services/api'
 import { extractCode, isHttpUrl } from '../utils/links'
@@ -18,9 +16,6 @@ const input = ref(null)
 const trigger = ref(null)
 const resultPanel = ref(null)
 const copyButton = ref(null)
-const drawer = ref(null)
-const historyOpen = ref(false)
-const statsPanel = ref(null)
 let active = true
 
 async function expand() {
@@ -64,7 +59,6 @@ async function submit() {
       result.value = link
       await nextTick()
       resultPanel.value?.focus()
-      statsPanel.value?.inspect(link.shortUrl)
     }
   } catch (cause) {
     if (active) {
@@ -75,10 +69,6 @@ async function submit() {
   } finally {
     loading.value = false
   }
-}
-
-function showStats(link) {
-  statsPanel.value?.inspect(link.shortUrl, true)
 }
 
 function handleKeydown(event) {
@@ -100,18 +90,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="widget-home">
-    <RouterLink to="/" class="widget-brand" aria-label="GS. — Página inicial">
-      <span class="widget-brand-icon"><Link2 :size="19" :stroke-width="2" /></span>
-      <span>GS<span class="brand-dot">.</span></span>
-    </RouterLink>
-    <span class="workspace-label"><span /> Seu espaço de links</span>
-
-    <div class="workspace">
-      <div class="workspace-intro"><p class="workspace-eyebrow">PEQUENOS LINKS. NOVAS POSSIBILIDADES.</p><h1>Seu link, do início ao clique<span class="brand-dot">.</span></h1><p>Encurte, compartilhe e acompanhe. Tudo por aqui.</p></div>
-      <div class="workspace-grid">
+    <div class="workspace workspace-single workspace-home">
+      <div class="workspace-intro"><p class="workspace-eyebrow">PEQUENOS LINKS. NOVAS POSSIBILIDADES.</p><h1>Seu link, do início ao clique<span class="brand-dot">.</span></h1><p>Encurte e compartilhe. Sem precisar de uma conta.</p></div>
         <section class="workspace-create" aria-labelledby="create-title">
-          <div class="workspace-section-heading"><div><p class="workspace-eyebrow"><Plus :size="13" /> CRIAR</p><h2 id="create-title">Um caminho mais curto<span class="brand-dot">.</span></h2></div><span class="workspace-step">01</span></div>
+          <div class="workspace-section-heading"><div><p class="workspace-eyebrow"><Plus :size="13" /> CRIAR</p><h2 id="create-title">Um caminho mais curto<span class="brand-dot">.</span></h2></div></div>
           <div class="widget-stage">
             <div class="link-capsule" :class="{ 'is-expanded': expanded, 'has-result': expanded && result, 'has-error': expanded && error }" @keydown="handleKeydown">
               <Transition name="capsule-content">
@@ -133,7 +115,7 @@ onUnmounted(() => {
                   <p class="result-original" :title="result.originalUrl">{{ result.originalUrl }}</p>
                   <div class="capsule-bottom result-bottom">
                     <button type="button" class="new-link-button" @click="startAnother"><Plus :size="14" /> Encurtar outro</button>
-                    <button type="button" class="result-stats" aria-label="Ver estatísticas deste link" @click="showStats(result)"><BarChart3 :size="15" /><span>Estatísticas</span></button>
+                    <RouterLink :to="{ name: 'stats', query: { code: result.code } }" class="result-stats" aria-label="Ver métricas deste link"><BarChart3 :size="15" /><span>Ver métricas</span></RouterLink>
                     <span class="keyboard-hint"><kbd>espaço</kbd> para copiar</span>
                   </div>
                 </div>
@@ -159,14 +141,6 @@ onUnmounted(() => {
           </div>
           <p class="workspace-tip"><Link2 :size="14" /> Menos caracteres. O mesmo destino.</p>
         </section>
-        <StatsPanel ref="statsPanel" />
-      </div>
-      <p class="workspace-footnote"><LockKeyhole :size="12" /> Sem conta, sem complicação. Seu histórico fica neste navegador.</p>
+      <p class="workspace-footnote"><LockKeyhole :size="12" /> Quer acompanhar os cliques? Entre ou crie uma conta para ver as métricas.</p>
     </div>
-
-    <button type="button" class="history-trigger" aria-haspopup="dialog" :aria-expanded="historyOpen" aria-controls="history-drawer" @click="drawer.open()">
-      <GalleryVerticalEnd :size="18" /><span>Histórico</span><span v-if="history.links.length" class="history-count">{{ history.links.length }}</span>
-    </button>
-    <HistoryDrawer ref="drawer" @toggle="historyOpen = $event" @create="startAnother" @inspect="showStats" />
-  </div>
 </template>

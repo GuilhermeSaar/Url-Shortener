@@ -6,10 +6,12 @@ import CopyButton from './CopyButton.vue'
 import { errorMessage, getUrlStats } from '../services/api'
 import { extractCode, formatDate, isHttpUrl } from '../utils/links'
 import { useHistoryStore } from '../stores/history'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const history = useHistoryStore()
+const auth = useAuthStore()
 const panel = ref(null)
 const heading = ref(null)
 const query = ref('')
@@ -54,6 +56,11 @@ async function load(code) {
     stats.value = data
   } catch (cause) {
     if (requestController.signal.aborted) return
+    if (cause.response?.status === 401) {
+      auth.signOut()
+      await router.replace({ name: 'login', query: { code } })
+      return
+    }
     notFound.value = cause.response?.status === 404
     if (!notFound.value) error.value = errorMessage(cause)
   } finally {
@@ -76,7 +83,7 @@ function search() {
     const code = extractCode(value)
     submittedLink.value = isHttpUrl(value) ? { code, url: value } : null
     if (route.query.code === code) load(code)
-    else router.replace({ name: 'home', query: { ...route.query, code } })
+    else router.replace({ name: 'stats', query: { ...route.query, code } })
   } catch (cause) {
     inputError.value = cause.message
   }
@@ -100,7 +107,6 @@ defineExpose({ inspect })
     <div class="workspace-section-heading">
       <div><p class="workspace-eyebrow"><BarChart3 :size="13" /> ACOMPANHAR</p><h2 id="stats-title" ref="heading" tabindex="-1">Cada clique conta<span class="brand-dot">.</span></h2></div>
       <button v-if="activeCode" type="button" class="stats-refresh" :disabled="loading" aria-label="Atualizar estatísticas" @click="load(activeCode)"><RefreshCw :size="15" :class="{ 'animate-spin': loading }" /></button>
-      <span v-else class="workspace-step">02</span>
     </div>
     <form class="stats-search" novalidate @submit.prevent="search">
       <label for="stats-query" class="sr-only">Código ou URL curta para consultar estatísticas</label>

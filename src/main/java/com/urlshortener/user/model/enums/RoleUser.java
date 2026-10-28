@@ -1,4 +1,4 @@
-package com.urlshortener.user.domain;
+package com.urlshortener.user.model.enums;
 
 public enum RoleUser {
 

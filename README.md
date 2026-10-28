@@ -16,13 +16,13 @@ O projeto reúne estudos práticos de APIs REST, autenticação, persistência r
 | Redirecionamento | Implementado com `302 Found` e cabeçalho `Location`. |
 | Contagem de acessos | Implementada com incremento direto no banco de dados. |
 | Estatísticas | API implementada: data de criação, total de cliques e URL original. Exige JWT. |
-| Cadastro e login | Implementados no backend, com BCrypt e emissão de JWT. |
-| Interface web | Protótipo com criação, cópia e histórico local dos últimos 20 links. |
-| Estatísticas na interface | Painel implementado; integração com a autenticação do backend pendente. |
+| Cadastro e login | Implementados no backend e na interface, com BCrypt e emissão de JWT. |
+| Interface web | Criação, cópia, autenticação e histórico local dos últimos 20 links. |
+| Estatísticas na interface | Painel integrado ao JWT do Spring Security. |
 | Expiração de links | Data de 90 dias persistida; bloqueio de links expirados e ativação da limpeza agendada pendentes. |
 | Infraestrutura local | PostgreSQL disponível pelo Docker Compose e Dockerfile para a API. A composição completa dos serviços está pendente. |
 
-**Integração em andamento:** o frontend ainda não possui telas de cadastro/login nem envia o token JWT. Por isso, a consulta de estatísticas pela interface recebe `401 Unauthorized` na configuração atual. O fluxo autenticado pode ser utilizado pela API, conforme os exemplos abaixo.
+Após o login pela interface, o frontend armazena o JWT localmente e o envia como `Authorization: Bearer <token>` apenas nas chamadas a `/api/**`, conforme exigido pelo filtro de segurança.
 
 ## Tecnologias
 
@@ -51,7 +51,7 @@ Visão de alto nível da arquitetura final pretendida, com login integrado ao fr
 - **Integridade no banco:** chaves primárias, chave estrangeira e restrições de unicidade protegem os dados. A unicidade do código também fornece o índice usado em sua consulta.
 - **Incremento de cliques no banco:** a operação `click_count = click_count + 1` evita que leituras e gravações separadas na aplicação percam incrementos concorrentes.
 - **Schema versionado:** o Flyway aplica as migrações, enquanto o Hibernate está configurado com `ddl-auto: validate` para validar o mapeamento.
-- **Histórico no navegador:** o Pinia mantém até 20 links no `localStorage`. Esse histórico pertence ao navegador e não é uma listagem de links vinculados a uma conta.
+- **Histórico na aba:** o Pinia mantém até 20 links em memória enquanto a aba está aberta. Esse histórico não é uma listagem de links vinculados a uma conta.
 
 ## Executar localmente
 
@@ -112,7 +112,7 @@ npm run dev
 
 Abra o endereço informado pelo Vite, normalmente `http://localhost:5173`.
 
-Durante o desenvolvimento, o Vite encaminha `/shorten` e `/api` para `http://localhost:8080`. Os links curtos devolvidos pela API apontam para o backend, que executa o redirecionamento e contabiliza os acessos.
+Durante o desenvolvimento, o Vite encaminha `/shorten`, `/register`, `/login` e `/api` para `http://localhost:8080`. Os links curtos devolvidos pela API apontam para o backend, que executa o redirecionamento e contabiliza os acessos.
 
 Para configurar outra base da API, consulte [`frontend/.env.example`](frontend/.env.example) e as [orientações do frontend](frontend/README.md). O proxy de desenvolvimento não é incluído no build de produção.
 
@@ -287,7 +287,7 @@ Os requisitos descrevem o escopo pretendido. A seção [Estado atual](#estado-at
 
 Prioridades identificadas a partir do estado atual do código:
 
-- [ ] Integrar cadastro, login e envio de JWT no frontend.
+- [x] Integrar cadastro, login e envio de JWT no frontend.
 - [ ] Vincular os links aos usuários e definir a autorização das estatísticas por proprietário.
 - [ ] Concluir a retenção: bloquear links expirados nas consultas, habilitar a limpeza agendada, permitir alterar a expiração e avaliar um índice para `expires_at`.
 - [ ] Conciliar o requisito de códigos com exatamente seis caracteres com o `minLength(6)` do Sqids e o limite da coluna no banco.

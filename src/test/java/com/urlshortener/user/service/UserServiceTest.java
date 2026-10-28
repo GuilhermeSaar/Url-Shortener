@@ -1,7 +1,7 @@
 package com.urlshortener.user.service;
 
 import com.urlshortener.user.dto.RegisterRequest;
-import com.urlshortener.user.domain.RoleUser;
+import com.urlshortener.user.model.enums.RoleUser;
 import com.urlshortener.user.model.UserModel;
 import com.urlshortener.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;

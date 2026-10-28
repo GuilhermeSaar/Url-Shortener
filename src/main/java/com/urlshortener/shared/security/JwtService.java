@@ -27,7 +27,7 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails user) {
-        Date now = new Date();
+        var now = new Date();
 
         return Jwts.builder()
                 .subject(user.getUsername())

@@ -1,14 +1,14 @@
 # Requisitos e Documentação Técnica: Frontend do Encurtador de URL
 
-> **Estado da integração:** este documento descreve o protótipo sem conta. O backend passou a exigir JWT para consultar `/api/**`, e a integração de cadastro/login e envio do token no frontend ainda está pendente. Na configuração atual, o painel recebe `401 Unauthorized`. Consulte o [estado atual do projeto](../README.md#estado-atual).
+> **Estado da integração:** o frontend cadastra e autentica usuários. Após o login, mantém o JWT em memória e o envia como `Authorization: Bearer <token>` apenas para `/api/**`, conforme o contrato do Spring Security. Atualizar, fechar ou abrir outra aba exige novo login.
 
 ## 1. Visão Geral e Escopo
 
-Este documento descreve o protótipo **GS.** conforme a implementação atual em `frontend/`. A interface reúne criação de links e consulta de estatísticas em **uma única tela**, com identidade **clara e fosca**, destaques em verde e histórico em uma gaveta lateral.
+Este documento descreve o protótipo **GS.** conforme a implementação atual em `frontend/`. A interface separa a criação pública de links e a consulta autenticada de estatísticas, com identidade **clara e fosca**, destaques em verde e histórico em uma gaveta lateral.
 
-A home contém uma cápsula expansível para encurtar links e um painel de estatísticas sempre presente na composição. Em telas maiores, os dois painéis aparecem lado a lado; em telas de até `800px`, ficam em uma coluna. Tela única significa um único espaço de uso, com rolagem quando necessária.
+A home contém a cápsula expansível para encurtar links. A tela `/entrar` oferece login e cadastro, enquanto `/stats` reúne as métricas e o histórico. As telas compartilham o cabeçalho, as cores e os cartões arredondados, com composição em uma coluna e adaptação para celular.
 
-O protótipo utiliza o backend existente, normalmente em `http://localhost:8080`, sem exigir conta. As estatísticas vêm da API; o histórico pertence apenas ao navegador utilizado.
+O protótipo utiliza o backend existente, normalmente em `http://localhost:8080`. Encurtar links não exige conta; consultar métricas exige autenticação. As estatísticas vêm da API; o histórico pertence apenas ao navegador utilizado.
 
 ## 2. Stack Tecnológica
 
@@ -48,9 +48,9 @@ As cores e dimensões específicas de cada componente ficam em `frontend/src/sty
 - Marca **GS.** e identificação discreta do espaço de links.
 - Apresentação breve: **“Seu link, do início ao clique.”**
 - Painel **Criar**, com a cápsula **“Encurtar link”** e seus estados.
-- Painel **Acompanhar**, com busca por código ou link curto e apresentação das métricas.
-- Nota discreta sobre uso sem conta e armazenamento local.
-- Botão flutuante **Histórico**, no canto inferior direito, com contagem dos links quando houver entradas.
+- Tela autenticada de métricas com painel **Acompanhar** e busca por código ou link curto.
+- Acesso para cadastro/login e indicação discreta de sessão e armazenamento local.
+- Botão flutuante **Histórico** na tela de métricas, com contagem dos links quando houver entradas.
 
 As transições da cápsula e da gaveta respeitam `prefers-reduced-motion`. Não há feedback sonoro implementado.
 
@@ -63,21 +63,21 @@ As transições da cápsula e da gaveta respeitam `prefers-reduced-motion`. Não
 3. **Validação:** o frontend remove espaços das extremidades e valida a URL antes do envio. Entradas inválidas exibem erro junto ao campo.
 4. **Envio:** o campo fica somente para leitura, a ação de envio mostra carregamento e novos envios são bloqueados até a conclusão. A cápsula não pode ser recolhida durante esse processamento.
 5. **Sucesso:** o formulário dá lugar ao link curto, à indicação do destino original, à cópia e às ações “Encurtar outro” e “Estatísticas”. A URL curta é a devolvida pela API, preservando seu domínio.
-6. **Integração:** o link criado entra no histórico local e suas estatísticas são consultadas automaticamente no painel da mesma home.
+6. **Integração:** o link criado entra no histórico local. A ação **Ver métricas** abre a tela de estatísticas, exigindo login quando necessário e preservando o código escolhido. A criação não faz consultas de métricas.
 7. **Falha:** o erro é apresentado na cápsula, preservando o endereço informado para permitir nova tentativa.
 
 Recolher e reabrir a cápsula preserva o texto ou resultado atual. “Encurtar outro” limpa o resultado e o campo, mantendo a cápsula aberta com foco para uma nova entrada.
 
-### 4.2 Consulta de Estatísticas na Home
+### 4.2 Consulta de Estatísticas na Tela Autenticada
 
-O painel permanece na mesma tela da ferramenta de criação e aceita:
+O painel fica em `/stats`, acessível após autenticação, e aceita:
 
-- Consulta automática após a criação de um link.
+- Consulta do código selecionado pela ação **Ver métricas** após criar um link.
 - Busca manual por código alfanumérico ou URL HTTP/HTTPS cujo caminho contenha um único código.
 - Seleção pela ação “Estatísticas” do resultado ou de uma entrada do histórico.
-- Abertura da home com o parâmetro `code` na URL.
+- Abertura de `/stats` com o parâmetro `code` na URL.
 
-Ao selecionar um link pelo resultado ou histórico, o foco é direcionado ao título do painel, com rolagem quando necessária. A consulta automática após encurtar preserva o foco no resultado da cápsula.
+Ao selecionar um link pelo histórico, o foco é direcionado ao título do painel, com rolagem quando necessária. Visitantes que tentam acessar a tela são encaminhados ao login antes de consultar a API. Se a API responder `401`, a sessão local é encerrada e o usuário volta ao login, preservando o código.
 
 | Estado | Comportamento |
 | --- | --- |
@@ -90,7 +90,7 @@ Ao selecionar um link pelo resultado ou histórico, o foco é direcionado ao tí
 
 O painel oferece atualização manual do código selecionado. Consultar novamente o mesmo código refaz a requisição. Ao trocar a seleção, a consulta anterior é cancelada para impedir que uma resposta antiga substitua a seleção atual. Não há atualização periódica automática.
 
-A home deve renderizar normalmente sem `code`, com `code` vazio ou inválido. O estado inicial não depende de um link previamente selecionado e não usa métricas fictícias.
+A tela de métricas renderiza normalmente sem `code`, com `code` vazio ou inválido. O estado inicial não depende de um link previamente selecionado e não usa métricas fictícias.
 
 ### 4.3 Cópia e Atalhos
 
@@ -112,21 +112,27 @@ O botão flutuante abre uma gaveta lateral modal, implementada com `<dialog>`. �
 O histórico:
 
 - Mantém até **20 links recentes**, em ordem de criação local, com novas entradas no início.
-- Usa a chave **`elo:link-history:v1`** no `localStorage`, por meio da store Pinia.
+- Fica somente em memória, por meio da store Pinia.
 - Armazena URL curta, URL original, código e data local da criação da entrada.
 - Evita duplicação pela URL curta e valida as entradas recuperadas do armazenamento.
 - Exibe link curto, destino original e data, com ações de abrir o link curto, copiar e consultar estatísticas.
-- Fecha a gaveta e carrega o painel da home ao selecionar “Estatísticas”, sem trocar de página.
+- Fecha a gaveta e carrega o painel de métricas ao selecionar “Estatísticas”, sem trocar de página.
 - Apresenta um estado vazio com ação para iniciar a criação do primeiro link.
 - Continua funcionando em memória se não conseguir persistir os dados, com aviso na gaveta.
 
 Esse histórico não é uma listagem fornecida pelo backend e não é sincronizado entre dispositivos. A implementação não oferece exclusão individual de entradas nem limpeza do histórico pela interface.
 
+### 4.5 Autenticação
+
+O botão **Entrar** abre `/entrar`, com os fluxos de cadastro e login. O cadastro envia `POST /register`; o login envia `POST /login` e valida a resposta `token` antes de mantê-la em memória. Após o login, o usuário segue para as métricas do código escolhido, quando houver. Atualizar, fechar ou abrir outra aba exige novo login. Ao sair, o token é descartado e o usuário retorna à home.
+
+As consultas a `/api/**` incluem o cabeçalho `Authorization: Bearer <token>`. As chamadas públicas (`/shorten`, `/register` e `/login`) não recebem esse cabeçalho. Se o armazenamento não estiver disponível, o token fica apenas em memória até a página ser fechada.
+
 ## 5. Integração com o Backend
 
 ### 5.1 Endereçamento e Requisições
 
-Em desenvolvimento, as chamadas usam caminhos relativos e passam pelo proxy do Vite para `http://localhost:8080`. A variável `VITE_API_BASE_URL` permite configurar outra base da API na compilação.
+Em desenvolvimento, as chamadas usam caminhos relativos e passam pelo proxy do Vite para `http://localhost:8080`: `/shorten`, `/register`, `/login` e `/api`. A variável `VITE_API_BASE_URL` permite configurar outra base da API na compilação.
 
 O cliente utiliza `Accept: application/json`, envia o corpo de criação como JSON e limita as requisições a 15 segundos.
 
@@ -154,7 +160,13 @@ O frontend valida a URL devolvida e o código contido nela antes de apresentá-l
 
 Para erros `400`, as mensagens válidas de `errors` referentes ao campo `url` aparecem no formulário. Respostas sem esse formato recebem uma mensagem apropriada de falha.
 
-### 5.3 Consultar Estatísticas
+### 5.3 Cadastro e Login
+
+**Endpoints:** `POST /register` e `POST /login`
+
+Os dois endpoints recebem JSON com `email` e `password`; o login devolve `{ "token": "<jwt>" }`. O cliente só aceita um JWT com três segmentos Base64URL antes de usá-lo e o mantém em memória. O cabeçalho Bearer é acrescentado pelo interceptor do Axios exclusivamente para caminhos iniciados por `/api/`.
+
+### 5.4 Consultar Estatísticas
 
 **Endpoint:** `GET /api/url/{code}`
 
@@ -172,7 +184,7 @@ O frontend verifica se a data é interpretável, se o destino é HTTP/HTTPS e se
 
 A data é formatada em `pt-BR`. Como a API usa uma data sem indicação de fuso horário, o frontend não presume que ela esteja em UTC. Os cliques usam formatação numérica em `pt-BR`.
 
-### 5.4 Redirecionamento e Cliques
+### 5.5 Redirecionamento e Cliques
 
 **Endpoint:** `GET /{code}`, com resposta `302 Found` para o destino original.
 
@@ -180,7 +192,7 @@ Abrir um link curto usa uma âncora HTML direta, em nova aba, com `rel="noopener
 
 Consultar estatísticas não acessa o redirecionamento. Abrir a URL de destino exibida no painel também não passa pelo link curto e, portanto, não registra esse clique no encurtador.
 
-### 5.5 Tratamento de Erros e Limitações da API
+### 5.6 Tratamento de Erros e Limitações da API
 
 - Erros de validação, timeout, indisponibilidade, respostas inesperadas e recursos não encontrados recebem mensagens na interface.
 - A resposta `404` não permite distinguir um link inexistente de um expirado.
@@ -193,15 +205,16 @@ Consultar estatísticas não acessa o redirecionamento. Abrir a URL de destino e
 
 | Endereço | Comportamento atual |
 | --- | --- |
-| `/` | Home única, com criação e painel de estatísticas inicialmente sem seleção |
-| `/?code=aB3xYz` | Mesma home, consultando as estatísticas do código informado |
-| `/stats` | Redireciona para a home, com âncora `#link-stats` |
-| `/stats/aB3xYz` | Redireciona para `/?code=aB3xYz#link-stats` |
+| `/` | Home pública com criação de links |
+| `/entrar` | Login/cadastro, seguido do acesso às métricas |
+| `/stats` | Tela autenticada de métricas e histórico, inicialmente sem seleção |
+| `/stats?code=aB3xYz` | Tela de métricas consultando o código informado, após autenticação |
+| `/?code=aB3xYz` e `/stats/aB3xYz` | Encaminham para `/stats?code=aB3xYz`, exigindo autenticação |
 | Caminhos desconhecidos do frontend | Redirecionam para `/` |
 
-Os endereços `/stats` existem para compatibilidade e não renderizam uma página separada. A implementação usa apenas `HomeView` como tela.
+As telas usam `HomeView`, `AuthView` e `StatsView`. A proteção de navegação impede abrir as métricas sem uma sessão local; o Spring Security valida o JWT nas requisições à API.
 
-Selecionar ou buscar um código atualiza o parâmetro `code` com `router.replace`, sem criar um passo adicional no histórico de navegação e sem voltar automaticamente ao topo da home. A âncora dos endereços antigos permite localizar o painel de estatísticas.
+Selecionar ou buscar um código atualiza o parâmetro `code` com `router.replace`, sem criar um passo adicional no histórico de navegação e sem voltar automaticamente ao topo. Trocar de tela volta ao topo.
 
 ## 7. Organização do Código
 
@@ -209,23 +222,28 @@ Selecionar ou buscar um código atualiza o parâmetro `code` com `router.replace
 frontend/
   src/
     components/
+      AppHeader.vue        # Navegação compartilhada e logout
       CopyButton.vue       # Cópia e confirmação
       HistoryDrawer.vue    # Gaveta de histórico local
-      StatsPanel.vue       # Busca e métricas dentro da home
+      StatsPanel.vue       # Busca e métricas na tela autenticada
     router/
       index.js             # Instância do Vue Router
       routes.js            # Rotas, compatibilidade e rolagem
+      guards.js            # Proteção do acesso às métricas
     services/api.js        # Axios, contrato e mensagens de erro
+    stores/auth.js         # Estado da sessão JWT em Pinia
     stores/history.js      # Histórico local em Pinia
     utils/links.js         # Validação, extração de código e datas
-    views/HomeView.vue     # Tela única e fluxo da cápsula
+    views/HomeView.vue     # Criação pública de links
+    views/AuthView.vue     # Cadastro e login
+    views/StatsView.vue    # Métricas e histórico após autenticação
     App.vue                # Estrutura principal e acesso ao conteúdo
     main.js                # Inicialização de Vue, Pinia e Router
     style.css              # Tailwind e identidade visual compartilhada
   tests/
     api.test.js            # Contrato e falhas da API com adapter controlado
-    home.test.js           # Renderização da home sem seleção ou com código inválido
-    router.test.js         # Compatibilidade e seleção na mesma tela
+    home.test.js           # Renderização das telas e separação das funcionalidades
+    router.test.js         # Autenticação, compatibilidade e seleção de links
   vite.config.js           # Plugins e proxy de desenvolvimento
 ```
 
@@ -238,7 +256,7 @@ npm install
 npm run dev
 ```
 
-O Vite informa o endereço local disponível, normalmente `http://localhost:5173`. A configuração atual utiliza os plugins Vue e Tailwind e encaminha `/shorten` e `/api` para o backend:
+O Vite informa o endereço local disponível, normalmente `http://localhost:5173`. A configuração atual utiliza os plugins Vue e Tailwind e encaminha `/shorten`, `/register`, `/login` e `/api` para o backend:
 
 ```javascript
 import { defineConfig } from 'vite'
@@ -250,6 +268,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/shorten': { target: 'http://localhost:8080', changeOrigin: true },
+      '/register': { target: 'http://localhost:8080', changeOrigin: true },
+      '/login': { target: 'http://localhost:8080', changeOrigin: true },
       '/api': { target: 'http://localhost:8080', changeOrigin: true },
     },
   },
@@ -284,7 +304,7 @@ A cobertura atual inclui:
 
 - Payload e endpoints pelo pipeline real do Axios, com adapter controlado.
 - Respostas `400` e `404`, cancelamento, falhas de conexão e formatos inesperados.
-- Renderização dos componentes reais da home sem código, com código vazio e com código inválido, prevenindo a regressão de tela em branco na inicialização.
-- Redirecionamento dos endereços antigos e seleção de códigos na mesma tela, preservando o comportamento de rolagem.
+- Renderização das telas reais, mantendo métricas e histórico fora da home e do acesso de visitantes.
+- Proteção de rotas, preservação do código no login, bloqueio após logout e compatibilidade dos endereços antigos.
 
 O teste de renderização usa Vue no ambiente de testes e não comprova o layout no navegador. Interações, responsividade, Clipboard API, foco e animações exigem conferência no navegador; a integração real depende do backend e do banco de dados em execução.
