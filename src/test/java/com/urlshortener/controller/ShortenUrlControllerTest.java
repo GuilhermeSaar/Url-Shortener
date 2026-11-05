@@ -37,13 +37,13 @@ class ShortenUrlControllerTest {
         var originalUrl = "https://www.google.com";
         when(service.createShortenUrl(originalUrl, null)).thenReturn(shortCode);
 
-        mockMvc.perform(post("/shorten")
+        mockMvc.perform(post("/api/shorten")
                         .contentType("application/json")
                         .content("""
                                 {"url":"https://www.google.com"}
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.response").value("http://localhost/" + shortCode));
+                .andExpect(jsonPath("$.response").value("http://localhost/api/" + shortCode));
 
         verify(service).createShortenUrl(originalUrl, null);
     }
@@ -54,7 +54,7 @@ class ShortenUrlControllerTest {
         var originalUrl = "https://www.google.com";
         when(service.originalUrl(shortCode)).thenReturn(originalUrl);
 
-        mockMvc.perform(get("/{shortCode}", shortCode))
+        mockMvc.perform(get("/api/{shortCode}", shortCode))
                 .andExpect(status().isFound())
                 .andExpect(header().string("Location", originalUrl));
 

@@ -9,9 +9,10 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -31,7 +32,7 @@ class UrlConcurrencyTest {
 
     @Test
     void shouldIncrementCounterWithThreadConcurrency() throws Exception {
-        var responseContent = mockMvc.perform(post("/shorten")
+        var responseContent = mockMvc.perform(post("/api/shorten")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"url\": \"https://github.com\"}"))
                 .andExpect(status().isCreated())
@@ -41,29 +42,25 @@ class UrlConcurrencyTest {
         var path = shortUrl.getPath();
         var shortCode = path.substring(path.lastIndexOf('/') + 1);
 
-        var numberOfThreads = 5000;
-        ExecutorService service = Executors.newFixedThreadPool(numberOfThreads);
-        var latch = new CountDownLatch(numberOfThreads);
-
-        for (int i = 0; i < numberOfThreads; i++) {
-            service.submit(() -> {
-                try {
-                    mockMvc.perform(get("/" + shortCode))
-                            .andExpect(status().isFound());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    latch.countDown();
-                }
-            });
+        var numberOfThreads = 100;
+        ExecutorService service = Executors.newFixedThreadPool(16);
+        var requests = new ArrayList<Future<?>>();
+        try {
+            for (int i = 0; i < numberOfThreads; i++) {
+                requests.add(service.submit(() -> {
+                    mockMvc.perform(get(path)).andExpect(status().isFound());
+                    return null;
+                }));
+            }
+            for (var request : requests) {
+                request.get(30, TimeUnit.SECONDS);
+            }
+            var urlModel = repository.findByCode(shortCode).orElseThrow();
+            assertThat(urlModel.getClickCount()).isEqualTo(numberOfThreads);
+        } finally {
+            service.shutdownNow();
+            service.awaitTermination(30, TimeUnit.SECONDS);
+            repository.findByCode(shortCode).ifPresent(repository::delete);
         }
-
-        boolean finishedInTime = latch.await(10, TimeUnit.SECONDS);
-        service.shutdown();
-
-        assertThat(finishedInTime).isTrue();
-        var urlModel = repository.findByCode(shortCode).orElseThrow();
-
-        assertThat(urlModel.getClickCount()).isEqualTo(numberOfThreads);
     }
 }

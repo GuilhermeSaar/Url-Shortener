@@ -1,13 +1,16 @@
 package com.urlshortener.url.repository;
 
 import com.urlshortener.url.model.UrlModel;
+import com.urlshortener.user.model.UserModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface UrlRepository extends JpaRepository<UrlModel, Long> {
 
@@ -21,4 +24,9 @@ public interface UrlRepository extends JpaRepository<UrlModel, Long> {
     Long getNextSequenceId();
 
     void deleteByExpiresAtBefore(Instant now);
+
+    List<UrlModel> findAllByUser(UserModel user);
+
+    Optional<UrlModel> findByCodeAndUser(String code, UserModel user);
+
 }

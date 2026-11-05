@@ -35,7 +35,6 @@ public class UrlModel implements Persistable<Long> {
     @Column(nullable = false)
     private Instant expiresAt;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserModel user;

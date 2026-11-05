@@ -7,6 +7,7 @@ import com.urlshortener.url.repository.UrlRepository;
 import com.urlshortener.user.model.UserModel;
 import com.urlshortener.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.sqids.Sqids;
@@ -57,12 +58,26 @@ public class UrlService {
     }
 
     @Transactional(readOnly = true)
-    public UrlStatsResponse getUrlStats(String code) {
+    public UrlStatsResponse getUrlStats(UserModel user, String code) {
 
-        var urlModel = urlRepository.findByCode(code).orElseThrow(
+        if (user == null) throw new AccessDeniedException("User cannot be null");
+
+        var urlModel = urlRepository.findByCodeAndUser(code, user).orElseThrow(
                 () -> new ResourceNotFound("Url not found")
         );
 
         return new UrlStatsResponse(urlModel.getCreatedAt(), urlModel.getClickCount(), urlModel.getUrlOriginal());
+    }
+
+    @Transactional(readOnly = true)
+    public List<UrlStatsResponse> findAllUrls(String userAuth) {
+
+        var user = userRepository.findByEmail(userAuth).orElseThrow(
+                () -> new ResourceNotFound("User not found")
+        );
+
+       return urlRepository.findAllByUser(user).stream()
+               .map(UrlStatsResponse::new)
+               .toList();
     }
 }

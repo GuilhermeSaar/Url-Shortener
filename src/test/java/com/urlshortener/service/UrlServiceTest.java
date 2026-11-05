@@ -127,27 +127,29 @@ public class UrlServiceTest {
         var createdAt = LocalDateTime.of(2026, 10, 19, 12, 0);
         var originalUrl = "https://exemplo.com/pagina-original";
         var clickCount = 7L;
-        var urlModel = new UrlModel(1L, code, originalUrl, null);
+        var user = new UserModel();
+        var urlModel = new UrlModel(1L, code, originalUrl, user);
         urlModel.setCreatedAt(createdAt);
         urlModel.setClickCount(clickCount);
-        when(repository.findByCode(code)).thenReturn(Optional.of(urlModel));
+        when(repository.findByCodeAndUser(code, user)).thenReturn(Optional.of(urlModel));
 
-        UrlStatsResponse result = urlService.getUrlStats(code);
+        UrlStatsResponse result = urlService.getUrlStats(user, code);
 
         assertEquals(createdAt, result.date());
         assertEquals(clickCount, result.clickCount());
         assertEquals(originalUrl, result.urlOriginal());
-        verify(repository).findByCode(code);
+        verify(repository).findByCodeAndUser(code, user);
         verify(repository, never()).incrementClickCount(anyString());
     }
 
     @Test
     void shouldThrowWhenStatsCodeDoesNotExist() {
         var code = "inexistente";
-        when(repository.findByCode(code)).thenReturn(Optional.empty());
+        var user = new UserModel();
+        when(repository.findByCodeAndUser(code, user)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFound.class, () -> urlService.getUrlStats(code));
+        assertThrows(ResourceNotFound.class, () -> urlService.getUrlStats(user, code));
 
-        verify(repository).findByCode(code);
+        verify(repository).findByCodeAndUser(code, user);
     }
 }
