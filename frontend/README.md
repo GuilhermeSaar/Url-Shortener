@@ -28,7 +28,7 @@ Contas sem links recebem uma orientação para criar o primeiro. Carregamento, f
 
 O histórico vem de `GET /api/urls` e fica apenas no estado temporário da tela; não é salvo no Pinia, `localStorage`, `sessionStorage` ou IndexedDB. Ao sair, os dados são limpos e requisições pendentes são canceladas. Cada nova sessão consulta os links da conta atual.
 
-O JWT fica em um cookie `HttpOnly` definido pelo backend. O JavaScript não recebe nem armazena o token. A interface verifica a sessão antes de liberar as rotas autenticadas.
+O JWT fica em um cookie `HttpOnly` definido pelo backend. O JavaScript não recebe nem armazena o token. A interface verifica a sessão antes de liberar as rotas autenticadas. O logout invalida os tokens anteriores da conta em todos os dispositivos.
 
 ## Organização
 

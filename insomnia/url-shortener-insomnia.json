@@ -154,7 +154,7 @@
       "parentId": "fld_auth_tests",
       "_type": "request",
       "name": "04 · Sair",
-      "description": "Encerra a sessão no cliente e remove o cookie. Faça login novamente para consultar links da conta.",
+      "description": "Remove o cookie e invalida os tokens anteriores da conta em todos os dispositivos. Faça login novamente para consultar links da conta.",
       "url": "{{ _.base_url }}/logout",
       "method": "POST",
       "body": {},

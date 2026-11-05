@@ -39,6 +39,9 @@ public class UserModel implements UserDetails {
     @Column(nullable = false)
     private RoleUser role = RoleUser.ROLE_USER;
 
+    @Column(name = "token_version", nullable = false)
+    private Long tokenVersion = 0L;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UrlModel> urls;
 

@@ -24,6 +24,8 @@ O projeto reúne estudos práticos de APIs REST, autenticação, persistência r
 
 Após o login pela interface, a API envia o JWT em um cookie `HttpOnly`. O navegador o encaminha nas chamadas a `/api/**`; o frontend não lê, armazena ou monta o token manualmente.
 
+O JWT contém a versão de autenticação da conta. Um logout autenticado incrementa essa versão e invalida os tokens anteriores em todos os dispositivos. A migração Flyway `V3__user_token_version.sql` adiciona a versão às contas existentes. Tokens emitidos antes dessa mudança não possuem a versão e exigem novo login.
+
 ## Tecnologias
 
 | Camada | Tecnologias e ferramentas |

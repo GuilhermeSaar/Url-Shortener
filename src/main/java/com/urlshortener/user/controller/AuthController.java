@@ -4,11 +4,13 @@ import com.urlshortener.user.dto.LoginRequest;
 import com.urlshortener.user.dto.RegisterRequest;
 import com.urlshortener.user.service.AuthService;
 import com.urlshortener.user.service.UserService;
+import com.urlshortener.user.model.UserModel;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,8 +36,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
-        authService.logout(response);
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserModel user, HttpServletResponse response) {
+        authService.logout(user, response);
         return ResponseEntity.noContent().build();
     }
 

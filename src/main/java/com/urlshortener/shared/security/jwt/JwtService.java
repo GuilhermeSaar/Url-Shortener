@@ -5,6 +5,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import com.urlshortener.user.model.UserModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -26,11 +27,12 @@ public class JwtService {
         this.expirationMillis = expirationMillis;
     }
 
-    public String generateToken(UserDetails user) {
+    public String generateToken(UserModel user) {
         var now = new Date();
 
         return Jwts.builder()
                 .subject(user.getUsername())
+                .claim("token_version", user.getTokenVersion())
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expirationMillis))
                 .signWith(signingKey)
@@ -53,9 +55,13 @@ public class JwtService {
 
         try {
             var claims = claims(token);
-            var userNameToken = claims.getSubject();
-            boolean isNotExpired = claims.getExpiration().after(new Date());
-            boolean isValid = userNameToken.equals(user.getUsername());
+            var version = claims.get("token_version");
+            boolean isNotExpired = claims.getExpiration() != null && claims.getExpiration().after(new Date());
+            boolean isValid = user instanceof UserModel account
+                    && user.getUsername().equals(claims.getSubject())
+                    && (version instanceof Integer || version instanceof Long)
+                    && account.getTokenVersion() != null
+                    && ((Number) version).longValue() == account.getTokenVersion().longValue();
 
             return isNotExpired && isValid;
 
