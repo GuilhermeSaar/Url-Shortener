@@ -56,10 +56,12 @@ class UrlStatsFlowIntegrationTest {
         mockMvc.perform(get("/api/urls").cookie(owner))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].code").value(ownerCode))
                 .andExpect(jsonPath("$[0].urlOriginal").value(ownerUrl));
         mockMvc.perform(get("/api/urls").cookie(other))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].code").value(otherCode))
                 .andExpect(jsonPath("$[0].urlOriginal").value(otherUrl));
 
         mockMvc.perform(get("/api/url/{code}", ownerCode)).andExpect(status().isUnauthorized());

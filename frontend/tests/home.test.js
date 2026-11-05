@@ -59,6 +59,12 @@ test('home oferece o encurtador sem renderizar métricas ou histórico', async (
   assert.doesNotMatch(html, /id="history-drawer"/)
 })
 
+test('home autenticada mostra acesso ao histórico da conta', async () => {
+  const html = await renderPage('/', true)
+  assert.match(html, /id="history-drawer"/)
+  assert.match(html, /Histórico/)
+})
+
 test('visitante encontra login e cadastro ao acessar as métricas', async () => {
   const html = await renderPage('/stats?code=aB3xYz')
   assert.match(html, /id="auth-title"/)
@@ -67,7 +73,7 @@ test('visitante encontra login e cadastro ao acessar as métricas', async () => 
   assert.doesNotMatch(html, /id="history-drawer"/)
 })
 
-test('a tela autenticada contém métricas e histórico, sem o formulário de criação', async () => {
+test('a tela autenticada contém métricas e histórico, sem formulário de criação', async () => {
   const html = await renderPage('/stats', true)
   assert.match(html, /Cada clique conta/)
   assert.match(html, /Nenhum link selecionado/)

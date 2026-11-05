@@ -10,7 +10,8 @@ export function isHttpUrl(value) {
 
 export function extractCode(value) {
   const input = value.trim()
-  const code = isHttpUrl(input) ? new URL(input).pathname.replace(/^\/+|\/+$/g, '') : input
+  const path = isHttpUrl(input) ? new URL(input).pathname.replace(/^\/+|\/+$/g, '') : input
+  const code = isHttpUrl(input) && path.startsWith('api/') ? path.slice(4) : path
   if (!/^[a-zA-Z0-9]+$/.test(code)) throw new Error('Informe um código válido ou uma URL curta completa.')
   return code
 }

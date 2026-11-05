@@ -2,12 +2,15 @@
 import { onBeforeUnmount, ref } from 'vue'
 import { ArrowUpRight, BarChart3, ExternalLink, GalleryVerticalEnd, Link2, LockKeyhole, Plus, X } from 'lucide-vue-next'
 import CopyButton from './CopyButton.vue'
-import { useHistoryStore } from '../stores/history'
 import { formatDate } from '../utils/links'
 
-const history = useHistoryStore()
+defineProps({
+  links: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false },
+  error: { type: String, default: '' },
+})
 const dialog = ref(null)
-const emit = defineEmits(['toggle', 'create', 'inspect'])
+const emit = defineEmits(['toggle', 'create', 'inspect', 'retry'])
 
 function open() {
   dialog.value.showModal()
@@ -45,16 +48,21 @@ defineExpose({ open })
       <div><span class="drawer-eyebrow"><GalleryVerticalEnd :size="14" /> SEUS LINKS</span><h2 id="history-title">Um lugar para voltar<span class="brand-dot">.</span></h2></div>
       <button type="button" class="capsule-close" aria-label="Fechar histórico" autofocus @click="close"><X :size="19" /></button>
     </div>
-    <p id="history-description" class="drawer-description">{{ history.links.length ? `Seus últimos ${history.links.length} links, sempre à mão.` : 'Seus links recentes, sempre à mão.' }}</p>
+    <p id="history-description" class="drawer-description">{{ links.length ? `Seus ${links.length} links, sempre à mão.` : 'Seus links, sempre à mão.' }}</p>
     <div class="drawer-body">
-      <div v-if="!history.links.length" class="drawer-empty">
+      <div v-if="loading" class="drawer-empty" role="status">Carregando seus links…</div>
+      <div v-else-if="error" class="drawer-empty">
+        <p role="alert">{{ error }}</p>
+        <button type="button" class="new-link-button" @click="emit('retry')">Tentar novamente</button>
+      </div>
+      <div v-else-if="!links.length" class="drawer-empty">
         <span class="drawer-empty-icon"><Link2 :size="25" /></span>
         <h3>Seu próximo link começa aqui.</h3>
         <p>Encurte seu primeiro link.<br />A gente guarda o caminho de volta.</p>
         <button type="button" class="new-link-button" @click="create"><Plus :size="15" /> Encurtar meu primeiro link <ArrowUpRight :size="14" /></button>
       </div>
       <ol v-else class="history-list">
-        <li v-for="link in history.links" :key="link.shortUrl" class="history-item">
+        <li v-for="link in links" :key="link.shortUrl" class="history-item">
           <div class="history-item-top"><span class="history-item-icon"><Link2 :size="16" /></span><time :datetime="link.createdAt">{{ formatDate(link.createdAt) }}</time></div>
           <a :href="link.shortUrl" target="_blank" rel="noopener noreferrer" class="history-link" :title="link.shortUrl"><span>{{ link.shortUrl }}</span><ExternalLink :size="13" /><span class="sr-only"> (abre em nova aba)</span></a>
           <p class="history-original" :title="link.originalUrl">{{ link.originalUrl }}</p>
@@ -62,6 +70,6 @@ defineExpose({ open })
         </li>
       </ol>
     </div>
-    <div class="drawer-note"><LockKeyhole :size="13" /><p>Salvo só neste navegador.<br /><span>Até 20 links recentes, sem precisar de conta.</span></p></div>
+    <div class="drawer-note"><LockKeyhole :size="13" /><p>Seus links associados à conta.</p></div>
   </dialog>
 </template>

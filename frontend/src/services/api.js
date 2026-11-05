@@ -29,7 +29,7 @@ export async function logout() {
 }
 
 export async function shortenUrl(url) {
-  const { data } = await api.post('/shorten', { url })
+  const { data } = await api.post('/api/shorten', { url })
   if (!isHttpUrl(data?.response)) throw new InvalidApiResponse()
   try {
     extractCode(data.response)
@@ -46,6 +46,26 @@ export async function getUrlStats(code, signal) {
     throw new InvalidApiResponse()
   }
   return data
+}
+
+export async function getUrlHistory(signal) {
+  const { data } = await api.get('/api/urls', { signal })
+  if (!Array.isArray(data)) throw new InvalidApiResponse()
+  const base = new URL(api.defaults.baseURL || '/', window.location.origin)
+  return data.map((item) => {
+    if (!item || typeof item.code !== 'string' || !/^[a-zA-Z0-9]+$/.test(item.code)
+      || !isHttpUrl(item.urlOriginal) || !Number.isSafeInteger(item.clickCount) || item.clickCount < 0
+      || typeof item.date !== 'string' || Number.isNaN(Date.parse(item.date))) {
+      throw new InvalidApiResponse()
+    }
+    return {
+      code: item.code,
+      shortUrl: new URL(`/api/${item.code}`, base).href,
+      originalUrl: item.urlOriginal,
+      createdAt: item.date,
+      clickCount: item.clickCount,
+    }
+  })
 }
 
 export function errorMessage(error, field) {

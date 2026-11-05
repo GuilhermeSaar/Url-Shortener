@@ -2,6 +2,7 @@ package com.urlshortener.url.service;
 
 import com.urlshortener.shared.exception.ResourceNotFound;
 import com.urlshortener.url.dto.UrlStatsResponse;
+import com.urlshortener.url.dto.UrlHistoryResponse;
 import com.urlshortener.url.model.UrlModel;
 import com.urlshortener.url.repository.UrlRepository;
 import com.urlshortener.user.model.UserModel;
@@ -70,14 +71,14 @@ public class UrlService {
     }
 
     @Transactional(readOnly = true)
-    public List<UrlStatsResponse> findAllUrls(String userAuth) {
+    public List<UrlHistoryResponse> findAllUrls(String userAuth) {
 
         var user = userRepository.findByEmail(userAuth).orElseThrow(
                 () -> new ResourceNotFound("User not found")
         );
 
        return urlRepository.findAllByUser(user).stream()
-               .map(UrlStatsResponse::new)
+               .map(UrlHistoryResponse::new)
                .toList();
     }
 }

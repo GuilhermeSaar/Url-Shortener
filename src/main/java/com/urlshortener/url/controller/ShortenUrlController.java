@@ -3,6 +3,7 @@ package com.urlshortener.url.controller;
 import com.urlshortener.url.dto.UrlRequest;
 import com.urlshortener.url.dto.UrlResponse;
 import com.urlshortener.url.dto.UrlStatsResponse;
+import com.urlshortener.url.dto.UrlHistoryResponse;
 import com.urlshortener.url.service.UrlService;
 import com.urlshortener.user.model.UserModel;
 import jakarta.validation.Valid;
@@ -63,7 +64,7 @@ public class ShortenUrlController {
     }
 
     @GetMapping(value = "/urls")
-    public ResponseEntity<List<UrlStatsResponse>> getUrlStats(@AuthenticationPrincipal UserModel user) {
+    public ResponseEntity<List<UrlHistoryResponse>> getUrlStats(@AuthenticationPrincipal UserModel user) {
 
         var response = service.findAllUrls(user.getEmail());
         return ResponseEntity.ok(response);

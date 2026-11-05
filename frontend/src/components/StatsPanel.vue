@@ -5,12 +5,11 @@ import { ArrowUpRight, BarChart3, CalendarDays, ExternalLink, Link2, LoaderCircl
 import CopyButton from './CopyButton.vue'
 import { errorMessage, getUrlStats } from '../services/api'
 import { extractCode, formatDate, isHttpUrl } from '../utils/links'
-import { useHistoryStore } from '../stores/history'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
-const history = useHistoryStore()
+const props = defineProps({ links: { type: Array, default: () => [] } })
 const auth = useAuthStore()
 const panel = ref(null)
 const heading = ref(null)
@@ -26,7 +25,7 @@ const shortUrl = computed(() => {
   if (!stats.value) return ''
   const selected = submittedLink.value
   if (selected && selected.code === activeCode.value) return selected.url
-  return history.links.find((link) => link.code === activeCode.value)?.shortUrl || ''
+  return props.links.find((link) => link.code === activeCode.value)?.shortUrl || ''
 })
 const numberFormatter = new Intl.NumberFormat('pt-BR')
 let controller
@@ -57,7 +56,7 @@ async function load(code) {
   } catch (cause) {
     if (requestController.signal.aborted) return
     if (cause.response?.status === 401) {
-      auth.signOut()
+      try { await auth.signOut() } catch { /* The session cannot be used. */ }
       await router.replace({ name: 'login', query: { code } })
       return
     }

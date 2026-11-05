@@ -5,21 +5,52 @@ import axios from 'axios'
 // Exercise the real Axios request/response pipeline without a running backend.
 let respond
 axios.defaults.adapter = (config) => respond(config)
-const { getSession, getUrlStats, login, logout, shortenUrl, errorMessage } = await import('../src/services/api.js')
+const { getSession, getUrlHistory, getUrlStats, login, logout, shortenUrl, errorMessage } = await import('../src/services/api.js')
+const { extractCode } = await import('../src/utils/links.js')
 
 function response(config, data) {
   return Promise.resolve({ config, data, status: 200, statusText: 'OK', headers: {} })
 }
 
-test('criação envia JSON para /shorten e preserva o domínio do link retornado', async () => {
+test('histórico busca links autenticados e converte a resposta do servidor', async () => {
+  const previousWindow = globalThis.window
+  globalThis.window = { location: { origin: 'https://short.example' } }
+  try {
+    respond = (config) => {
+      assert.equal(config.url, '/api/urls')
+      assert.equal(config.method, 'get')
+      assert.equal(config.withCredentials, true)
+      return response(config, [{ code: 'abc123', date: '2026-10-19T12:00:00', clickCount: 3, urlOriginal: 'https://example.com' }])
+    }
+    assert.deepEqual(await getUrlHistory(), [{
+      code: 'abc123', shortUrl: 'https://short.example/api/abc123',
+      createdAt: '2026-10-19T12:00:00', clickCount: 3, originalUrl: 'https://example.com',
+    }])
+    respond = (config) => response(config, [])
+    assert.deepEqual(await getUrlHistory(), [])
+    respond = (config) => response(config, [{ code: '../bad', date: 'invalid' }])
+    await assert.rejects(getUrlHistory(), (error) => /resposta inesperada/.test(errorMessage(error)))
+  } finally {
+    globalThis.window = previousWindow
+  }
+})
+
+test('criação envia JSON para /api/shorten e preserva o domínio do link retornado', async () => {
   respond = (config) => {
-    assert.equal(config.url, '/shorten')
+    assert.equal(config.url, '/api/shorten')
     assert.equal(config.method, 'post')
     assert.match(config.headers.getContentType(), /application\/json/)
     assert.deepEqual(JSON.parse(config.data), { url: 'https://example.com/article' })
-    return response(config, { response: 'http://localhost:8080/aB3xYz' })
+    return response(config, { response: 'http://localhost:8080/api/aB3xYz' })
   }
-  assert.deepEqual(await shortenUrl('https://example.com/article'), { response: 'http://localhost:8080/aB3xYz' })
+  assert.deepEqual(await shortenUrl('https://example.com/article'), { response: 'http://localhost:8080/api/aB3xYz' })
+})
+
+test('extrai o código das URLs curtas atuais e anteriores', () => {
+  assert.equal(extractCode('https://short.example/api/abc123'), 'abc123')
+  assert.equal(extractCode('https://short.example/abc123'), 'abc123')
+  assert.equal(extractCode('abc123'), 'abc123')
+  assert.throws(() => extractCode('https://short.example/api/abc/123'))
 })
 
 test('400 apresenta apenas as mensagens do campo url e aceita erros sem o formato padrão', async () => {
