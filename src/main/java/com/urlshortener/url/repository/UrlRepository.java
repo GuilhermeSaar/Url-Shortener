@@ -28,5 +28,4 @@ public interface UrlRepository extends JpaRepository<UrlModel, Long> {
     List<UrlModel> findAllByUser(UserModel user);
 
     Optional<UrlModel> findByCodeAndUser(String code, UserModel user);
-
 }

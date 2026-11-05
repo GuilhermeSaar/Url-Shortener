@@ -1,0 +1,187 @@
+<div id="gs-home-proposal">
+  <style>
+    #gs-home-proposal .gs-screen {
+      --gs-bg: light-dark(#f5f7f4, #171e1b);
+      --gs-panel: light-dark(#ffffff, #202a24);
+      --gs-text: light-dark(#263d35, #e3ece4);
+      --gs-muted: light-dark(#637368, #aab9ae);
+      --gs-line: light-dark(#dce5dd, #37493d);
+      --gs-soft: light-dark(#eaf1e7, #2c3d30);
+      --gs-accent: light-dark(#426d50, #afd1ad);
+      --gs-on-accent: light-dark(#ffffff, #1a2b1e);
+      background: var(--gs-bg); color: var(--gs-text);
+      font-family: Inter, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5;
+      min-height: 780px; border-radius: 16px; overflow: hidden;
+    }
+    #gs-home-proposal .gs-screen * { box-sizing: border-box; }
+    #gs-home-proposal .gs-header { display:flex; align-items:center; gap:22px; flex-wrap:wrap; padding:22px 112px 22px 28px; border-bottom:1px solid var(--gs-line); background:var(--gs-panel); }
+    #gs-home-proposal .gs-brand { display:flex; align-items:center; gap:9px; font-size:23px; font-weight:600; letter-spacing:-1px; }
+    #gs-home-proposal .gs-brand-mark { display:grid; place-items:center; color:var(--gs-accent); }
+    #gs-home-proposal .gs-header-title { font-weight:500; border-left:1px solid var(--gs-line); padding-left:22px; }
+    #gs-home-proposal .gs-account { margin-left:auto; color:var(--gs-muted); font-size:12px; }
+    #gs-home-proposal .gs-main { padding:28px; }
+    #gs-home-proposal .gs-intro { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    #gs-home-proposal .gs-intro h1 { font-size:28px; letter-spacing:-1px; line-height:1.2; margin:0 0 7px; font-weight:500; }
+    #gs-home-proposal .gs-intro p { color:var(--gs-muted); margin:0; }
+    #gs-home-proposal .gs-demo { font-size:11px; color:var(--gs-muted); }
+    #gs-home-proposal .gs-create { padding:18px 20px; border:1px solid var(--gs-line); border-radius:14px; background:var(--gs-panel); margin:22px 0; }
+    #gs-home-proposal .gs-create label { display:block; font-weight:500; margin-bottom:9px; }
+    #gs-home-proposal .gs-input-row { display:flex; gap:10px; }
+    #gs-home-proposal .gs-input-row input { min-width:0; flex:1; border:1px solid var(--gs-line); border-radius:9px; background:var(--gs-bg); color:var(--gs-text); padding:11px 12px; font:inherit; }
+    #gs-home-proposal .gs-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; border:1px solid var(--gs-line); border-radius:9px; background:var(--gs-panel); color:var(--gs-text); padding:8px 11px; font:inherit; font-size:12px; font-weight:500; white-space:nowrap; }
+    #gs-home-proposal .gs-button-primary { background:var(--gs-accent); color:var(--gs-on-accent); border-color:var(--gs-accent); }
+    #gs-home-proposal .gs-button-quiet { border-color:transparent; color:var(--gs-accent); }
+    #gs-home-proposal .gs-button:hover { filter:brightness(.96); }
+    #gs-home-proposal .gs-summary { display:flex; gap:26px; margin:0 0 24px; flex-wrap:wrap; color:var(--gs-muted); }
+    #gs-home-proposal .gs-summary strong { margin-right:5px; font-size:19px; color:var(--gs-text); font-weight:500; font-variant-numeric:tabular-nums; }
+    #gs-home-proposal .gs-summary-item { display:flex; align-items:baseline; }
+    #gs-home-proposal .gs-list-heading { display:flex; justify-content:space-between; gap:14px; align-items:center; margin-bottom:13px; }
+    #gs-home-proposal .gs-list-heading h2 { margin:0; font-size:17px; font-weight:500; }
+    #gs-home-proposal .gs-list-heading span { font-size:12px; color:var(--gs-muted); }
+    #gs-home-proposal .gs-list { border:1px solid var(--gs-line); border-radius:14px; background:var(--gs-panel); overflow:hidden; }
+    #gs-home-proposal .gs-list-labels, #gs-home-proposal .gs-row { display:grid; grid-template-columns:minmax(0,1fr) 80px 155px; gap:16px; align-items:center; }
+    #gs-home-proposal .gs-list-labels { padding:11px 18px; border-bottom:1px solid var(--gs-line); color:var(--gs-muted); font-size:11px; background:var(--gs-bg); }
+    #gs-home-proposal .gs-row { padding:16px 18px; }
+    #gs-home-proposal .gs-record + .gs-record { border-top:1px solid var(--gs-line); }
+    #gs-home-proposal .gs-record.is-selected { background:var(--gs-soft); }
+    #gs-home-proposal .gs-url { min-width:0; }
+    #gs-home-proposal .gs-short { font-weight:500; color:var(--gs-accent); word-break:break-all; }
+    #gs-home-proposal .gs-original { color:var(--gs-muted); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin:3px 0 0; }
+    #gs-home-proposal .gs-date { color:var(--gs-muted); font-size:11px; margin-top:5px; }
+    #gs-home-proposal .gs-clicks { font-weight:500; font-variant-numeric:tabular-nums; }
+    #gs-home-proposal .gs-actions { display:flex; justify-content:flex-end; align-items:center; gap:4px; }
+    #gs-home-proposal .gs-detail { border-top:1px solid var(--gs-line); padding:18px; background:var(--gs-soft); }
+    #gs-home-proposal .gs-detail p { margin:0 0 10px; }
+    #gs-home-proposal .gs-detail dl { display:grid; grid-template-columns:95px minmax(0,1fr); gap:10px; margin:0; font-size:12px; }
+    #gs-home-proposal .gs-detail dt { color:var(--gs-muted); }
+    #gs-home-proposal .gs-detail dd { margin:0; word-break:break-word; }
+    #gs-home-proposal .gs-note { min-height:21px; color:var(--gs-accent); font-size:12px; margin:10px 0 0; }
+    #gs-home-proposal .gs-split { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:20px; align-items:start; }
+    #gs-home-proposal .gs-inspector { background:var(--gs-panel); border:1px solid var(--gs-line); border-radius:14px; overflow:hidden; }
+    #gs-home-proposal .gs-inspector-title { padding:16px 18px; border-bottom:1px solid var(--gs-line); font-size:15px; font-weight:500; }
+    #gs-home-proposal .gs-inspector .gs-detail { background:var(--gs-panel); border:0; }
+    #gs-home-proposal .gs-split .gs-list-labels, #gs-home-proposal .gs-split .gs-row { grid-template-columns:minmax(0,1fr) 48px; }
+    #gs-home-proposal .gs-split .gs-actions { grid-column:1/-1; justify-content:flex-start; margin-top:2px; }
+    #gs-home-proposal .gs-screen svg { width:16px; height:16px; flex-shrink:0; }
+    @media (max-width:680px) {
+      #gs-home-proposal .gs-header { padding:18px 100px 18px 18px; gap:12px; }
+      #gs-home-proposal .gs-header-title { border:0; padding:0; }
+      #gs-home-proposal .gs-account { display:none; }
+      #gs-home-proposal .gs-main { padding:22px 16px; }
+      #gs-home-proposal .gs-input-row { flex-direction:column; }
+      #gs-home-proposal .gs-input-row input { font-size:16px; }
+      #gs-home-proposal .gs-list-labels { display:none; }
+      #gs-home-proposal .gs-row { grid-template-columns:minmax(0,1fr) 48px; gap:10px; padding:15px; }
+      #gs-home-proposal .gs-actions { grid-column:1/-1; justify-content:flex-start; }
+      #gs-home-proposal .gs-split { grid-template-columns:1fr; }
+      #gs-home-proposal .gs-screen { min-height:1250px; }
+      #gs-home-proposal .gs-button { min-height:44px; }
+      #gs-home-proposal .gs-summary { gap:18px; }
+    }
+  </style>
+  <div class="viz-carousel" aria-label="Propostas para a página após o login" data-previous-label="Anterior" data-next-label="Próxima">
+    <section data-variant="Lista com detalhes" aria-label="Lista principal com detalhes no próprio link">
+      <div class="gs-screen" data-layout="inline">
+        <header class="gs-header"><div class="gs-brand"><span class="gs-brand-mark"><i data-lucide="link" aria-hidden="true"></i></span>GS.</div><span class="gs-header-title">Meus links</span><span class="gs-account">Minha conta</span></header>
+        <main class="gs-main">
+          <div class="gs-intro"><div><h1>Seus links, à mão.</h1><p>Crie, compartilhe e acompanhe em um só lugar.</p></div><span class="gs-demo">Prévia · dados ilustrativos</span></div>
+          <form class="gs-create"><label for="gs-new-inline">Encurtar um novo link</label><div class="gs-input-row"><input id="gs-new-inline" type="url" required placeholder="Cole uma URL começando com https://" aria-label="Endereço para encurtar"><button class="gs-button gs-button-primary cursor-interaction" type="submit"><i data-lucide="plus" aria-hidden="true"></i>Encurtar link</button></div><p class="gs-note" role="status"></p></form>
+          <div class="gs-summary"></div>
+          <div class="gs-list-heading"><h2>Meus links</h2><span>Mais recentes primeiro</span></div>
+          <div class="gs-list"><div class="gs-list-labels"><span>Link e destino</span><span>Cliques</span><span>Ações</span></div><div class="gs-records"></div></div>
+        </main>
+      </div>
+    </section>
+    <section data-variant="Lista e painel" aria-label="Lista principal e painel de detalhes lado a lado" hidden>
+      <div class="gs-screen" data-layout="split">
+        <header class="gs-header"><div class="gs-brand"><span class="gs-brand-mark"><i data-lucide="link" aria-hidden="true"></i></span>GS.</div><span class="gs-header-title">Meus links</span><span class="gs-account">Minha conta</span></header>
+        <main class="gs-main">
+          <div class="gs-intro"><div><h1>Seus links, à mão.</h1><p>Escolha um link para consultar seus detalhes.</p></div><span class="gs-demo">Prévia · dados ilustrativos</span></div>
+          <form class="gs-create"><label for="gs-new-split">Encurtar um novo link</label><div class="gs-input-row"><input id="gs-new-split" type="url" required placeholder="Cole uma URL começando com https://" aria-label="Endereço para encurtar"><button class="gs-button gs-button-primary cursor-interaction" type="submit"><i data-lucide="plus" aria-hidden="true"></i>Encurtar link</button></div><p class="gs-note" role="status"></p></form>
+          <div class="gs-summary"></div>
+          <div class="gs-split"><section><div class="gs-list-heading"><h2>Meus links</h2><span>Mais recentes</span></div><div class="gs-list"><div class="gs-list-labels"><span>Link e destino</span><span>Cliques</span></div><div class="gs-records"></div></div></section><aside class="gs-inspector" aria-label="Detalhes do link selecionado"><div class="gs-inspector-title">Detalhes do link</div><div class="gs-inspector-body" aria-live="polite"></div></aside></div>
+        </main>
+      </div>
+    </section>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('gs-home-proposal');
+      const initial = [
+        {code:'mP4tX9', url:'https://exemplo.com/catalogo-novembro', date:'5 nov. 2026', clicks:86},
+        {code:'kR7wA2', url:'https://exemplo.com/inscricao-no-evento', date:'4 nov. 2026', clicks:52},
+        {code:'pL8vN3', url:'https://exemplo.com/portfolio', date:'2 nov. 2026', clicks:36}
+      ];
+      const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const moneyless = n => new Intl.NumberFormat('pt-BR').format(n);
+      const details = link => `<div class="gs-detail"><p><strong>${escape(link.code)}</strong> · ${moneyless(link.clicks)} cliques</p><dl><dt>Link curto</dt><dd>gs.link/api/${escape(link.code)}</dd><dt>Destino</dt><dd>${escape(link.url)}</dd><dt>Criado em</dt><dd>${escape(link.date)}</dd></dl></div>`;
+      const saved = window.openai?.widgetState?.privateContent || {};
+      const allStates = [];
+      function save() {
+        if (window.openai?.setWidgetState) {
+          const selected = Object.fromEntries(allStates.map(s => [s.layout, s.selected]));
+          window.openai.setWidgetState({modelContent:{proposta:'Histórico como página inicial autenticada'},privateContent:{selected}}).catch(() => {});
+        }
+      }
+      root.querySelectorAll('.gs-screen').forEach(screen => {
+        const state = {screen, layout:screen.dataset.layout, selected:saved.selected?.[screen.dataset.layout] || (screen.dataset.layout==='split' ? initial[0].code : null), links:initial.map(x => ({...x})), summary:true};
+        allStates.push(state);
+        function render() {
+          const summary = screen.querySelector('.gs-summary');
+          summary.hidden = !state.summary;
+          summary.innerHTML = `<span class="gs-summary-item"><strong>${state.links.length}</strong> links na conta</span><span class="gs-summary-item"><strong>${moneyless(state.links.reduce((a,b)=>a+b.clicks,0))}</strong> cliques acumulados</span>`;
+          screen.querySelector('.gs-records').innerHTML = state.links.map(link => `<article class="gs-record ${state.selected===link.code ? 'is-selected' : ''}"><div class="gs-row"><div class="gs-url"><div class="gs-short">gs.link/api/${escape(link.code)}</div><p class="gs-original">${escape(link.url)}</p><div class="gs-date">Criado em ${escape(link.date)}</div></div><span class="gs-clicks" aria-label="${link.clicks} cliques">${moneyless(link.clicks)}</span><div class="gs-actions"><button class="gs-button cursor-interaction" type="button" data-copy="${escape(link.code)}"><i data-lucide="copy" aria-hidden="true"></i>Copiar</button><button class="gs-button gs-button-quiet cursor-interaction" type="button" data-detail="${escape(link.code)}" aria-expanded="${state.selected===link.code}">${state.selected===link.code && state.layout==='inline' ? 'Fechar' : 'Detalhes'}</button></div></div>${state.layout==='inline' && state.selected===link.code ? details(link) : ''}</article>`).join('');
+          if (state.layout==='split') {
+            const selected = state.links.find(link => link.code===state.selected) || state.links[0];
+            screen.querySelector('.gs-inspector-body').innerHTML = details(selected);
+          }
+          if (globalThis.lucide) lucide.createIcons({attrs:{width:16,height:16}});
+        }
+        state.render = render;
+        screen.addEventListener('click', async event => {
+          const detail = event.target.closest('[data-detail]');
+          const copy = event.target.closest('[data-copy]');
+          if (detail) {
+            state.selected = state.layout==='inline' && state.selected===detail.dataset.detail ? null : detail.dataset.detail;
+            render(); save();
+          }
+          if (copy) {
+            const url = `https://gs.link/api/${copy.dataset.copy}`;
+            try {
+              await navigator.clipboard.writeText(url);
+              copy.textContent = 'Copiado';
+              screen.querySelector('.gs-note').textContent = 'Link copiado.';
+            } catch {
+              screen.querySelector('.gs-note').textContent = url;
+            }
+          }
+        });
+        screen.querySelector('form').addEventListener('submit', event => {
+          event.preventDefault();
+          const input = screen.querySelector('input');
+          if (!input.checkValidity()) return input.reportValidity();
+          const code = 'novo' + (state.links.length + 1);
+          state.links.unshift({code,url:input.value,date:'5 nov. 2026',clicks:0});
+          state.selected = code; input.value=''; render();
+          screen.querySelector('.gs-note').textContent = 'Novo link adicionado à prévia.';
+          save();
+        });
+        render();
+        if (globalThis.Tweak) {
+          const tweak = new Tweak({container:screen,onChange:render});
+          tweak.addToggle(state,'summary',{label:'Mostrar resumo de links e cliques'});
+        }
+      });
+      window.addEventListener('openai:set_globals', event => {
+        const restored = event.detail?.globals?.widgetState?.privateContent?.selected;
+        if (!restored) return;
+        allStates.forEach(state => {
+          if (restored[state.layout] !== undefined) {
+            state.selected = restored[state.layout];
+            state.render();
+          }
+        });
+      });
+    })();
+  </script>
+</div>

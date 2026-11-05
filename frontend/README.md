@@ -1,12 +1,10 @@
 # Frontend — GS.
 
-Protótipo Vue 3 com Composition API (`<script setup>`), Vue Router 4, Pinia, Axios, Vite 7 e Tailwind CSS 4. Implementa os requisitos de `../docs/Requisitos-front.md`.
-
-> O frontend cadastra e autentica usuários pela própria interface. Após o login, a API grava o JWT em um cookie `HttpOnly`; o JavaScript não recebe nem armazena o token. Ao abrir ou atualizar a página, a interface consulta a sessão com o cookie para recuperar o estado autenticado.
+Vue 3 com Composition API, Vue Router 4, Pinia para autenticação, Axios, Vite 7 e Tailwind CSS 4.
 
 ## Executar
 
-Requer Node.js 20.19+ ou 22.12+ e o backend funcionando em `http://localhost:8080`.
+Requer Node.js 20.19+ ou 22.12+ e o backend em `http://localhost:8080`.
 
 ```bash
 cd frontend
@@ -14,35 +12,48 @@ npm install
 npm run dev
 ```
 
-Abra o endereço exibido pelo Vite (normalmente `http://localhost:5173`). As chamadas a `/shorten`, `/login`, `/register` e `/api` são encaminhadas ao backend por proxy. `changeOrigin: true` permite que a URL curta gerada use a origem do backend, onde o redirecionamento funciona. Os links curtos abrem com `<a>` e não passam pelo Vue Router.
+Abra o endereço exibido pelo Vite, normalmente `http://localhost:5173`. As chamadas a `/api`, `/login`, `/logout` e `/register` são encaminhadas ao backend por proxy.
 
-## Rotas e recursos
+## Navegação
 
-- `/`: tela pública com a cápsula expansível para criar e copiar links.
-- `/entrar`: tela de login e cadastro para acessar as métricas.
-- `/stats`: tela autenticada com painel de estatísticas e histórico dos últimos 20 links em uma gaveta lateral.
-- `/stats?code=aB3xYz`: seleciona um link no painel de métricas. Os endereços antigos `/?code=aB3xYz` e `/stats/aB3xYz` encaminham para essa tela, passando pelo login quando necessário.
-- Navegação adaptada para celular, foco visível, labels e mensagens acessíveis.
+- `/`: encurtador público com a cápsula expansível. Pessoas autenticadas são encaminhadas para **Meus links**.
+- `/entrar`: login e cadastro. Após entrar, a interface abre **Meus links**, preservando uma seleção de link recebida na URL.
+- `/meus-links`: página autenticada com criação compacta, total de links, soma dos cliques e lista dos links da conta, ordenada do mais recente para o mais antigo.
+- `/meus-links?code=abc123`: abre os detalhes desse link na própria lista.
+- `/stats`, `/stats/:code` e `/?code=abc123`: endereços anteriores encaminham à nova página, passando pelo login quando necessário.
 
-Na tela inicial, clique em **Encurtar link** para abrir o campo com foco automático. **Enter** envia e **Esc** recolhe a cápsula preservando o texto ou resultado; durante o envio, aguarde a conclusão. Com o resultado ativo e o foco na cápsula, **Espaço** copia o link quando o foco está fora de campos, links e botões. Na tela de métricas, o botão **Histórico** abre uma gaveta modal com cópia, acesso ao link e estatísticas; **Esc** ou um clique fora dela fecha o painel. As animações respeitam a preferência por movimento reduzido.
+Cada linha mostra o link curto e as ações de copiar e expandir detalhes. O destino, a data de criação e os cliques aparecem somente ao expandir. O botão **Atualizar** consulta novamente o servidor. Após criar um link, a resposta da API fica disponível para cópia e o histórico é atualizado. Se a atualização falhar, a interface preserva os dados já exibidos e oferece uma nova tentativa.
 
-Criar um link não consulta estatísticas. A ação **Ver métricas** abre a tela autenticada; visitantes passam por login/cadastro, preservando o código escolhido. Nessa tela, é possível buscar por código ou URL curta e selecionar **Estatísticas** no histórico. O painel mostra cliques, data de criação e destino, com atualização manual e estados de carregamento, erro e link não encontrado. Ao sair, o usuário volta à home. Uma resposta `401` remove a sessão do estado visual e solicita novo login.
+Contas sem links recebem uma orientação para criar o primeiro. Carregamento, falhas e seleções inválidas têm mensagens próprias. Em telas menores, as ações de cada link ficam abaixo dos seus dados.
 
-O histórico fica apenas em memória. Ele existe enquanto a aba permanece aberta e é descartado ao atualizar a página, fechar a aba ou abrir o app em outra aba. A sessão é mantida pelo cookie `HttpOnly` e pode continuar válida entre recarregamentos até expirar ou o usuário sair. O histórico não representa uma listagem do backend. A data do histórico é a data local de criação da entrada; o painel de estatísticas usa a data devolvida pela API.
+O histórico vem de `GET /api/urls` e fica apenas no estado temporário da tela; não é salvo no Pinia, `localStorage`, `sessionStorage` ou IndexedDB. Ao sair, os dados são limpos e requisições pendentes são canceladas. Cada nova sessão consulta os links da conta atual.
+
+O JWT fica em um cookie `HttpOnly` definido pelo backend. O JavaScript não recebe nem armazena o token. A interface verifica a sessão antes de liberar as rotas autenticadas.
 
 ## Organização
 
 ```text
 src/
-  components/   # Cabeçalho, cópia, painel de estatísticas e gaveta de histórico
-  router/       # Rotas e proteção de acesso às métricas
-  services/     # Axios e tratamento de erros da API
-  stores/       # Histórico local em Pinia
-  utils/        # Validação, códigos e datas
-  views/        # HomeView, AuthView e StatsView
+  components/   # Cabeçalho, cópia e lista de links com detalhes
+  composables/  # Consulta e ciclo de vida do histórico do servidor
+  router/       # Rotas, compatibilidade e proteção de acesso
+  services/     # Axios e validação das respostas da API
+  stores/       # Autenticação em Pinia
+  utils/        # Validação de links, códigos e datas
+  views/        # HomeView, AuthView e LinksView
   App.vue       # Estrutura da aplicação
-  style.css     # Tailwind e identidade visual
+  style.css     # Tailwind e identidade visual responsiva
 ```
+
+## Contrato da API
+
+- `POST /api/shorten` envia `{ "url": "https://example.com" }` e lê a URL curta completa de `response`.
+- `GET /api/urls` retorna os links do usuário autenticado com `code`, `date`, `clickCount` e `urlOriginal`. A interface monta o endereço `/api/{code}` usando a origem configurada para a API, ou a origem atual quando utiliza o proxy.
+- `GET /api/url/{code}` continua disponível no cliente de API para consultar as estatísticas de um link pertencente à conta. A nova lista já recebe as estatísticas pelo histórico.
+- `POST /register` e `POST /login` enviam e-mail e senha como JSON. O navegador envia o cookie nas requisições seguintes.
+- `GET /api/auth/session` verifica a sessão e `POST /logout` encerra a autenticação.
+
+A data devolvida pelo backend não possui fuso; o frontend não presume que seja UTC. A API não fornece uma série temporal de cliques, por isso a interface mostra apenas os totais disponíveis. Abrir o link curto contabiliza um clique; abrir diretamente o destino não passa pelo redirecionamento. A cópia automática depende da Clipboard API, normalmente disponível em HTTPS ou localhost; se falhar, a interface orienta a cópia manual.
 
 ## Compilar e publicar
 
@@ -51,31 +62,15 @@ npm run build
 npm run preview
 ```
 
-`build` gera `dist/`. O proxy é exclusivo do servidor de desenvolvimento: `preview` apenas permite inspecionar os arquivos compilados. Em produção, encaminhe `/shorten`, `/login`, `/logout`, `/register` e `/api` à API pelo servidor HTTP ou defina `VITE_API_BASE_URL` na compilação (copie `.env.example` para `.env.local`). Uma API em outra origem precisa permitir CORS com credenciais. Variáveis `VITE_*` são públicas.
+O build gera `dist/`. O proxy é exclusivo do desenvolvimento. Em produção, encaminhe `/api`, `/login`, `/logout` e `/register` à API pelo servidor HTTP ou defina `VITE_API_BASE_URL` na compilação. Uma API em outra origem precisa permitir CORS com credenciais. Variáveis `VITE_*` são públicas.
 
-O servidor que hospedar o frontend deve entregar `index.html` para rotas como `/stats/aB3xYz`. O redirecionamento `/{code}` permanece sob responsabilidade do backend; a publicação conjunta no Spring Boot exigirá definir esse roteamento e a integração do build.
+O servidor do frontend deve entregar `index.html` para suas rotas, incluindo `/meus-links`. Os caminhos `/api/{code}` devem chegar ao backend para executar o redirecionamento público.
 
-O Tailwind 4 usa o plugin oficial `@tailwindcss/vite` e a importação no CSS, sem configuração PostCSS adicional: https://tailwindcss.com/docs/installation/using-vite.
-
-## Contrato e limitações da integração
-
-A integração segue `docs/Requisitos-front.md`, conferido com os controllers Java.
-
-- `POST /shorten` envia `{ "url": "https://example.com" }` como JSON e lê a URL completa de `response`. Os erros `400` do campo `url` aparecem no formulário; falhas sem esse JSON recebem uma mensagem genérica.
-- `GET /api/url/{code}` devolve `date`, `clickCount` e `urlOriginal`. `404` exibe o estado de link inexistente/expirado. Respostas incompletas recebem mensagem de erro em vez de exibir métricas inválidas.
-- `POST /register` e `POST /login` enviam e-mail e senha como JSON. Um login válido responde com o cookie `HttpOnly`; o navegador o envia nas chamadas seguintes a `/api/**`.
-- A API não devolve código ou URL curta nas estatísticas. Para abrir/copiar esse link, a tela utiliza a URL informada na busca ou aquela existente no histórico local. Não deduzimos o domínio público a partir do código.
-- A API não informa expiração, não distingue link expirado de inexistente no `404` e não oferece listagem de links. O histórico local pode conter links que já não existem.
-- `date` não tem fuso horário; o frontend formata a data recebida sem presumir que seja UTC. `clickCount` deve caber em um inteiro seguro do JavaScript para ser exibido sem perda de precisão.
-- Somente os erros de validação e recurso não encontrado têm um corpo padronizado pelo backend. Timeout, indisponibilidade e outros formatos de erro também são tratados no frontend.
-- A URL de destino exibida no painel abre o destino diretamente. Apenas a ação de abrir a URL curta (`<a href="...">`) passa pelo redirecionamento `302` e contabiliza o clique.
-- A cópia automática depende da Clipboard API, normalmente disponível em HTTPS ou localhost. Se falhar, a interface orienta a cópia manual.
-
-## Verificação da integração
+## Verificação
 
 ```bash
 npm test
 npm run build
 ```
 
-Os testes usam o pipeline real do Axios com um adapter controlado para verificar payload, endpoints, respostas `400`/`404`, cancelamento e formatos inesperados. Também renderizam as telas reais e verificam a separação da criação e das métricas, a proteção das rotas, a preservação do código no login e o bloqueio após logout. A integração real depende do backend e do PostgreSQL em execução.
+Os testes verificam o cliente Axios, a renderização das telas e da lista, os redirecionamentos, o isolamento entre contas, a atualização após criação e o descarte de respostas atrasadas. As requisições são controladas nos testes; a integração real depende do backend e do PostgreSQL em execução.

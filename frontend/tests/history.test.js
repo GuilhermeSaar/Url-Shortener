@@ -33,6 +33,7 @@ test('histórico segue a sessão, atualiza após criação e descarta respostas 
   let account = null
   let historyRequests = 0
   let delayA = false
+  let failHistory = false
   let completeA
   const serverLinks = { a: [item('accountA')], b: [item('accountB')] }
 
@@ -46,11 +47,12 @@ test('histórico segue a sessão, atualiza após criação e descarta respostas 
       return response(config)
     }
     if (config.url === '/api/shorten') {
-      if (account) serverLinks[account].push(item('created'))
+      if (account) serverLinks[account].push({ ...item('created'), date: '2026-11-05T12:00:00' })
       return response(config, { response: 'https://short.example/api/created' })
     }
     if (config.url === '/api/urls') {
       historyRequests++
+      if (failHistory) throw new axios.AxiosError('Unavailable', 'ERR_BAD_RESPONSE', config, null, { status: 503, data: {} })
       const snapshot = [...serverLinks[account]]
       if (account === 'a' && delayA) {
         return new Promise((resolve) => { completeA = () => resolve(response(config, snapshot)) })
@@ -78,7 +80,14 @@ test('histórico segue a sessão, atualiza após criação e descarta respostas 
     assert.deepEqual(history.links.value.map((link) => link.code), ['accountA'])
     await shortenUrl('https://example.com/created')
     await history.load()
-    assert.deepEqual(history.links.value.map((link) => link.code), ['accountA', 'created'])
+    assert.deepEqual(history.links.value.map((link) => link.code), ['created', 'accountA'])
+    assert.equal(history.hasLoaded.value, true)
+
+    failHistory = true
+    await history.load()
+    assert.deepEqual(history.links.value.map((link) => link.code), ['created', 'accountA'])
+    assert.match(history.error.value, /Não foi possível/)
+    failHistory = false
 
     delayA = true
     const oldRequest = history.load()
@@ -86,6 +95,7 @@ test('histórico segue a sessão, atualiza após criação e descarta respostas 
     assert.ok(completeA)
     await auth.signOut()
     assert.deepEqual(history.links.value, [])
+    assert.equal(history.hasLoaded.value, false)
     await auth.signIn('b', 'password')
     await flush()
     assert.deepEqual(history.links.value.map((link) => link.code), ['accountB'])

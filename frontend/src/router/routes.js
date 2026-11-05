@@ -3,13 +3,14 @@ export const routes = [
     path: '/',
     name: 'home',
     component: () => import('../views/HomeView.vue'),
-    beforeEnter: (to) => ('code' in to.query ? { name: 'stats', query: to.query, replace: true } : true),
+    beforeEnter: (to) => ('code' in to.query ? { name: 'links', query: to.query, replace: true } : true),
   },
   { path: '/entrar', name: 'login', component: () => import('../views/AuthView.vue') },
-  { path: '/stats', name: 'stats', component: () => import('../views/StatsView.vue'), meta: { requiresAuth: true } },
+  { path: '/meus-links', name: 'links', component: () => import('../views/LinksView.vue'), meta: { requiresAuth: true } },
+  { path: '/stats', name: 'stats', redirect: (to) => ({ name: 'links', query: to.query }) },
   {
     path: '/stats/:code',
-    redirect: (to) => ({ name: 'stats', params: {}, query: { ...to.query, code: to.params.code } }),
+    redirect: (to) => ({ name: 'links', params: {}, query: { ...to.query, code: to.params.code } }),
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]

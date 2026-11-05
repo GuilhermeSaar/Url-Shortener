@@ -10,35 +10,60 @@
       "modified": 1791892800000,
       "created": 1791892800000,
       "name": "URL Shortener - Testes da API",
-      "description": "Testes manuais dos endpoints de encurtamento, redirecionamento e consulta de estatísticas do projeto.",
+      "description": "Fluxo: opcionalmente cadastre o usuário definido no ambiente; faça login; crie um link autenticado; consulte histórico e estatísticas. As requisições públicas não enviam cookies. O Insomnia armazena o cookie accessToken do login. A criação preenche owner_code ou anonymous_code. Para o teste entre contas, crie o link como proprietário, depois faça login com outra conta e consulte as estatísticas.",
       "scope": "collection",
       "_type": "workspace"
     },
     {
-      "_id": "fld_shorten_tests",
+      "_id": "env_urlshortener_base",
       "parentId": "wrk_urlshortener_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "name": "POST /shorten",
-      "description": "Um sucesso e cinco entradas inválidas para validar o endpoint atual.",
-      "environment": {},
-      "environmentPropertyOrder": null,
-      "metaSortKey": 1791892800000,
-      "_type": "request_group"
+      "_type": "environment",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8080",
+        "email": "insomnia@example.com",
+        "password": "password123",
+        "other_email": "idor.other@example.com",
+        "other_password": "IdorTest123!",
+        "original_url": "https://example.com/minha-pagina",
+        "anonymous_url": "https://example.com/link-anonimo",
+        "owner_code": "",
+        "anonymous_code": ""
+      },
+      "dataPropertyOrder": null,
+      "color": null,
+      "isPrivate": false
     },
     {
-      "_id": "req_shorten_valid",
-      "parentId": "fld_shorten_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "url": "http://localhost:8080/shorten",
-      "name": "01 - Encurtar URL válida (espera 201 e URL curta)",
-      "description": "Envia uma URL HTTPS e valida a URL curta retornada.",
+      "_id": "jar_urlshortener",
+      "parentId": "wrk_urlshortener_tests",
+      "_type": "cookie_jar",
+      "name": "Default Jar",
+      "cookies": []
+    },
+    {
+      "_id": "fld_auth_tests",
+      "parentId": "wrk_urlshortener_tests",
+      "_type": "request_group",
+      "name": "01 · Autenticação",
+      "description": "Cadastre uma vez, se necessário; use o mesmo e-mail e senha no ambiente. Login define o cookie HttpOnly accessToken.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_register_valid",
+      "parentId": "fld_auth_tests",
+      "_type": "request",
+      "name": "01 · Cadastrar usuário",
+      "description": "Opcional: crie a conta do ambiente. Se já existir, entre diretamente ou troque o e-mail no ambiente.",
+      "url": "{{ _.base_url }}/register",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"url\": \"https://example.com/minha-pagina\"\n}"
+        "text": "{\n  \"email\": \"{{ _.email }}\",\n  \"password\": \"{{ _.password }}\"\n}"
       },
+      "parameters": [],
       "headers": [
         {
           "name": "Content-Type",
@@ -50,472 +75,344 @@
         }
       ],
       "authentication": {},
+      "metaSortKey": 100,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
       "scripts": {
-        "afterResponse": "const body = JSON.parse(insomnia.response.text());\nconst shortUrl = body.response;\n\ninsomnia.test('responde HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('retorna URL curta com código Base62 de 6 caracteres', () => {\n  insomnia.expect(shortUrl).to.match(/^https?:\\/\\/[^/]+\\/[a-zA-Z0-9]{6}$/);\n});"
+        "afterResponse": "insomnia.test('Cadastro retorna 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});"
+      }
+    },
+    {
+      "_id": "req_login_valid",
+      "parentId": "fld_auth_tests",
+      "_type": "request",
+      "name": "02 · Entrar",
+      "description": "Autentica a conta do ambiente. O JWT chega em Set-Cookie, sem corpo e sem cabeçalho Bearer.",
+      "url": "{{ _.base_url }}/login",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"{{ _.email }}\",\n  \"password\": \"{{ _.password }}\"\n}"
       },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": true,
-        "cookies": {
-          "send": true,
-          "store": true
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
         }
+      ],
+      "authentication": {},
+      "metaSortKey": 200,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
+      "scripts": {
+        "afterResponse": "insomnia.test('Login retorna 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('login define o cookie accessToken', () => {\n  const cookie = insomnia.response.headers.find(header => header.key.toLowerCase() === 'set-cookie');\n  insomnia.expect(cookie, 'Set-Cookie').to.exist;\n  insomnia.expect(cookie.value).to.include('accessToken=');\n  insomnia.expect(cookie.value.toLowerCase()).to.include('httponly');\n});"
+      }
+    },
+    {
+      "_id": "req_session",
+      "parentId": "fld_auth_tests",
+      "_type": "request",
+      "name": "03 · Consultar sessão",
+      "description": "Após login, envia automaticamente o cookie e espera 204.",
+      "url": "{{ _.base_url }}/api/auth/session",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 300,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
+      "scripts": {
+        "afterResponse": "insomnia.test('Sessão autenticada retorna 204', () => {\n  insomnia.expect(insomnia.response.code).to.eql(204);\n});"
+      }
+    },
+    {
+      "_id": "req_logout",
+      "parentId": "fld_auth_tests",
+      "_type": "request",
+      "name": "04 · Sair",
+      "description": "Encerra a sessão no cliente e remove o cookie. Faça login novamente para consultar links da conta.",
+      "url": "{{ _.base_url }}/logout",
+      "method": "POST",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 400,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
+      "scripts": {
+        "afterResponse": "insomnia.test('Logout retorna 204', () => {\n  insomnia.expect(insomnia.response.code).to.eql(204);\n});"
+      }
+    },
+    {
+      "_id": "fld_shorten_tests",
+      "parentId": "wrk_urlshortener_tests",
+      "_type": "request_group",
+      "name": "02 · Criação",
+      "description": "A criação anônima desativa cookies nesta requisição; a criação autenticada usa o cookie do login.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 200
+    },
+    {
+      "_id": "req_shorten_anonymous",
+      "parentId": "fld_shorten_tests",
+      "_type": "request",
+      "name": "01 · Criar link anônimo",
+      "description": "Não envia o cookie de sessão, mesmo após login. Salva o código retornado em anonymous_code.",
+      "url": "{{ _.base_url }}/api/shorten",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"url\": \"{{ _.anonymous_url }}\"\n}"
       },
-      "_type": "request"
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 100,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
+      "scripts": {
+        "afterResponse": "insomnia.test('Criação retorna 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\nif (insomnia.response.code === 201) {\n  const shortUrl = insomnia.response.json().response;\n  const match = typeof shortUrl === 'string' && shortUrl.match(/\\/api\\/([^/?#]+)$/);\n  insomnia.test('retorna um link curto em /api/{code}', () => {\n    insomnia.expect(match).to.be.ok;\n  });\n  if (match) insomnia.environment.set('anonymous_code', match[1]);\n}"
+      }
+    },
+    {
+      "_id": "req_shorten_valid",
+      "parentId": "fld_shorten_tests",
+      "_type": "request",
+      "name": "02 · Criar link da conta",
+      "description": "Faça login antes. Salva o código retornado em owner_code para histórico, redirecionamento e estatísticas.",
+      "url": "{{ _.base_url }}/api/shorten",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"url\": \"{{ _.original_url }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": 200,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
+      "scripts": {
+        "afterResponse": "insomnia.test('Criação retorna 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\nif (insomnia.response.code === 201) {\n  const shortUrl = insomnia.response.json().response;\n  const match = typeof shortUrl === 'string' && shortUrl.match(/\\/api\\/([^/?#]+)$/);\n  insomnia.test('retorna um link curto em /api/{code}', () => {\n    insomnia.expect(match).to.be.ok;\n  });\n  if (match) insomnia.environment.set('owner_code', match[1]);\n}"
+      }
     },
     {
       "_id": "req_shorten_blank",
       "parentId": "fld_shorten_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "url": "http://localhost:8080/shorten",
-      "name": "02 - URL vazia (espera 400)",
-      "description": "Verifica a validação @NotBlank.",
+      "_type": "request",
+      "name": "03 · Validar URL vazia",
+      "description": "Exemplo de validação do campo obrigatório.",
+      "url": "{{ _.base_url }}/api/shorten",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
         "text": "{\n  \"url\": \"\"\n}"
       },
+      "parameters": [],
       "headers": [
         {
           "name": "Content-Type",
           "value": "application/json"
-        }
-      ],
-      "authentication": {},
-      "scripts": {
-        "afterResponse": "insomnia.test('rejeita URL vazia com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": true,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
-    },
-    {
-      "_id": "req_shorten_missing",
-      "parentId": "fld_shorten_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "url": "http://localhost:8080/shorten",
-      "name": "03 - Campo url ausente (espera 400)",
-      "description": "Verifica a validação quando a propriedade obrigatória não é enviada.",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{}"
-      },
-      "headers": [
+        },
         {
-          "name": "Content-Type",
+          "name": "Accept",
           "value": "application/json"
         }
       ],
       "authentication": {},
+      "metaSortKey": 300,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
       "scripts": {
-        "afterResponse": "insomnia.test('rejeita propriedade ausente com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": true,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
-    },
-    {
-      "_id": "req_shorten_ftp",
-      "parentId": "fld_shorten_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "url": "http://localhost:8080/shorten",
-      "name": "04 - Protocolo FTP (espera 400)",
-      "description": "Verifica que apenas URLs HTTP e HTTPS sejam aceitas.",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"url\": \"ftp://example.com/arquivo\"\n}"
-      },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ],
-      "authentication": {},
-      "scripts": {
-        "afterResponse": "insomnia.test('rejeita protocolo diferente de HTTP/HTTPS com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": true,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
-    },
-    {
-      "_id": "req_shorten_malformed",
-      "parentId": "fld_shorten_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "url": "http://localhost:8080/shorten",
-      "name": "05 - URL malformada (espera 400)",
-      "description": "Verifica a validação de formato da URL.",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"url\": \"https://\"\n}"
-      },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ],
-      "authentication": {},
-      "scripts": {
-        "afterResponse": "insomnia.test('rejeita URL malformada com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": true,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
-    },
-    {
-      "_id": "req_shorten_http_missing_host",
-      "parentId": "fld_shorten_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "url": "http://localhost:8080/shorten",
-      "name": "06 - URL HTTP sem host (espera 400)",
-      "description": "Reproduz a URL malformada http:///only-path, que deve ser rejeitada antes do cadastro.",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"url\": \"http:///only-path\"\n}"
-      },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ],
-      "authentication": {},
-      "scripts": {
-        "afterResponse": "insomnia.test('rejeita URL HTTP sem host com HTTP 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": true,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
+        "afterResponse": "insomnia.test('URL vazia retorna 400', () => {\n  insomnia.expect(insomnia.response.code).to.eql(400);\n});"
+      }
     },
     {
       "_id": "fld_redirect_tests",
       "parentId": "wrk_urlshortener_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "name": "GET /{shortCode}",
-      "description": "Valida o redirecionamento de códigos existentes e o comportamento para códigos inexistentes.",
+      "_type": "request_group",
+      "name": "03 · Redirecionamento público",
+      "description": "Crie o link da conta antes para preencher owner_code. O redirecionamento é público.",
       "environment": {},
       "environmentPropertyOrder": null,
-      "metaSortKey": 1791892801000,
-      "_type": "request_group"
+      "metaSortKey": 300
     },
     {
       "_id": "req_redirect_valid",
       "parentId": "fld_redirect_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "url": "http://localhost:8080/{shortCode}",
-      "name": "01 - Redirecionar código existente (espera 302)",
-      "description": "Substitua {shortCode} pelo código de uma URL já cadastrada antes de enviar a requisição.",
+      "_type": "request",
+      "name": "01 · Abrir link curto sem login",
+      "description": "Não envia cookies e não segue automaticamente o 302. Confira o cabeçalho Location.",
+      "url": "{{ _.base_url }}/api/{{ _.owner_code }}",
       "method": "GET",
       "body": {},
       "parameters": [],
-      "headers": [],
-      "authentication": {},
-      "scripts": {
-        "afterResponse": "const location = insomnia.response.headers.find(\n  (header) => header.key.toLowerCase() === 'location'\n);\n\ninsomnia.test('responde HTTP 302', () => {\n  insomnia.expect(insomnia.response.code).to.eql(302);\n});\n\ninsomnia.test('informa a URL original no cabeçalho Location', () => {\n  insomnia.expect(location, 'cabeçalho Location').to.exist;\n  insomnia.expect(location.value).to.eql('https://example.com/minha-pagina');\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": false,
-        "cookies": {
-          "send": true,
-          "store": true
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
         }
-      },
-      "_type": "request"
+      ],
+      "authentication": {},
+      "metaSortKey": 100,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "off",
+      "scripts": {
+        "afterResponse": "insomnia.test('Redirecionamento retorna 302', () => {\n  insomnia.expect(insomnia.response.code).to.eql(302);\n});\n\ninsomnia.test('Location aponta para a URL original', () => {\n  const location = insomnia.response.headers.find(header => header.key.toLowerCase() === 'location');\n  insomnia.expect(location, 'Location').to.exist;\n  insomnia.expect(location.value).to.eql(insomnia.environment.get('original_url'));\n});"
+      }
     },
     {
-      "_id": "req_redirect_missing",
-      "parentId": "fld_redirect_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "url": "http://localhost:8080/codigo-inexistente",
-      "name": "02 - Código inexistente (espera 404)",
-      "description": "Verifica que um código ausente seja informado como recurso não encontrado.",
-      "method": "GET",
-      "body": {},
-      "parameters": [],
-      "headers": [],
-      "authentication": {},
-      "scripts": {
-        "afterResponse": "insomnia.test('responde HTTP 404 para código inexistente', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": false,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
-    },
-    {
-      "_id": "fld_auth_tests",
+      "_id": "fld_history_tests",
       "parentId": "wrk_urlshortener_tests",
-      "modified": 1792604987000,
-      "created": 1792604987000,
-      "name": "Autenticação",
-      "description": "Execute cadastro e login nesta ordem. Copie o JWT retornado pelo login para as requisições autenticadas.",
+      "_type": "request_group",
+      "name": "04 · Histórico",
+      "description": "Faça login como proprietário e crie os links autenticado e anônimo antes de verificar o histórico.",
       "environment": {},
       "environmentPropertyOrder": null,
-      "metaSortKey": 1792604987000,
-      "_type": "request_group"
+      "metaSortKey": 400
     },
     {
-      "_id": "req_register_valid",
-      "parentId": "fld_auth_tests",
-      "modified": 1792604987000,
-      "created": 1792604987000,
-      "url": "http://localhost:8080/register",
-      "name": "01 - Cadastrar usuário (espera 201)",
-      "description": "Cria o usuário de teste insomnia@example.com. Altere o e-mail no corpo se ele já existir.",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"email\": \"insomnia@example.com\",\n  \"password\": \"password123\"\n}"
-      },
+      "_id": "req_history_valid",
+      "parentId": "fld_history_tests",
+      "_type": "request",
+      "name": "01 · Histórico da conta",
+      "description": "Deve incluir owner_code e excluir anonymous_code. Execute as duas requisições de criação antes desta consulta.",
+      "url": "{{ _.base_url }}/api/urls",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
       "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        },
         {
           "name": "Accept",
           "value": "application/json"
         }
       ],
       "authentication": {},
+      "metaSortKey": 100,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
       "scripts": {
-        "afterResponse": "insomnia.test('responde HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": true,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
+        "afterResponse": "insomnia.test('Histórico autenticado retorna 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\nif (insomnia.response.code === 200) {\n  const links = insomnia.response.json();\n  const ownerCode = insomnia.environment.get('owner_code');\n  const anonymousCode = insomnia.environment.get('anonymous_code');\n  insomnia.test('inclui o link da conta e exclui o anônimo', () => {\n    insomnia.expect(ownerCode).to.be.a('string').and.not.empty;\n    insomnia.expect(anonymousCode).to.be.a('string').and.not.empty;\n    insomnia.expect(links).to.be.an('array');\n    insomnia.expect(links.some(link => link.code === ownerCode)).to.eql(true);\n    insomnia.expect(links.some(link => link.code === anonymousCode)).to.eql(false);\n  });\n}"
+      }
     },
     {
-      "_id": "req_register_duplicate",
-      "parentId": "fld_auth_tests",
-      "modified": 1792604987000,
-      "created": 1792604987000,
-      "url": "http://localhost:8080/register",
-      "name": "02 - Cadastrar e-mail repetido (espera 409)",
-      "description": "Execute após o cadastro bem-sucedido para validar o bloqueio de e-mail duplicado.",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"email\": \"insomnia@example.com\",\n  \"password\": \"password123\"\n}"
-      },
+      "_id": "req_history_without_cookie",
+      "parentId": "fld_history_tests",
+      "_type": "request",
+      "name": "02 · Histórico sem sessão",
+      "description": "Não envia cookies, mesmo que exista uma sessão no Insomnia.",
+      "url": "{{ _.base_url }}/api/urls",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
       "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ],
-      "authentication": {},
-      "scripts": {
-        "afterResponse": "insomnia.test('responde HTTP 409 para e-mail duplicado', () => {\n  insomnia.expect(insomnia.response.code).to.eql(409);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": true,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
-    },
-    {
-      "_id": "req_login_valid",
-      "parentId": "fld_auth_tests",
-      "modified": 1792604987000,
-      "created": 1792604987000,
-      "url": "http://localhost:8080/login",
-      "name": "03 - Login válido (espera 200)",
-      "description": "Autentica o usuário. Copie o campo token da resposta para o cabeçalho Authorization das consultas autenticadas.",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"email\": \"insomnia@example.com\",\n  \"password\": \"password123\"\n}"
-      },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        },
         {
           "name": "Accept",
           "value": "application/json"
         }
       ],
       "authentication": {},
+      "metaSortKey": 200,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
       "scripts": {
-        "afterResponse": "const body = JSON.parse(insomnia.response.text());\n\ninsomnia.test('responde HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('retorna um JWT', () => {\n  insomnia.expect(body.token).to.be.a('string').and.not.empty;\n  insomnia.expect(body.token.split('.')).to.have.length(3);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": true,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
-    },
-    {
-      "_id": "req_login_invalid",
-      "parentId": "fld_auth_tests",
-      "modified": 1792604987000,
-      "created": 1792604987000,
-      "url": "http://localhost:8080/login",
-      "name": "04 - Login com senha inválida (espera 401)",
-      "description": "Valida a rejeição de credenciais incorretas.",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"email\": \"insomnia@example.com\",\n  \"password\": \"senha-incorreta\"\n}"
-      },
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ],
-      "authentication": {},
-      "scripts": {
-        "afterResponse": "insomnia.test('responde HTTP 401 para credenciais inválidas', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": true,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
+        "afterResponse": "insomnia.test('Histórico sem sessão retorna 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});"
+      }
     },
     {
       "_id": "fld_stats_tests",
       "parentId": "wrk_urlshortener_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "name": "GET /api/url/{code}",
-      "description": "Consulta as estatísticas de um código existente e verifica autenticação JWT e o erro para código inexistente.",
+      "_type": "request_group",
+      "name": "05 · Estatísticas",
+      "description": "Consulte o link criado com a sessão do proprietário; links anônimos não pertencem a uma conta.",
       "environment": {},
       "environmentPropertyOrder": null,
-      "metaSortKey": 1791892802000,
-      "_type": "request_group"
-    },
-    {
-      "_id": "req_stats_without_token",
-      "parentId": "fld_stats_tests",
-      "modified": 1792604987000,
-      "created": 1792604987000,
-      "url": "http://localhost:8080/api/url/COLE_O_CODIGO_GERADO",
-      "name": "01 - Consultar estatísticas sem JWT (espera 401)",
-      "description": "A rota /api/** deve exigir autenticação.",
-      "method": "GET",
-      "body": {},
-      "parameters": [],
-      "headers": [],
-      "authentication": {},
-      "scripts": {
-        "afterResponse": "insomnia.test('responde HTTP 401 sem token', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": false,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
+      "metaSortKey": 500
     },
     {
       "_id": "req_stats_valid",
       "parentId": "fld_stats_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "url": "http://localhost:8080/api/url/COLE_O_CODIGO_GERADO",
-      "name": "02 - Consultar estatísticas com JWT (espera 200)",
-      "description": "Execute POST /shorten e depois Login válido. Cole o código retornado na URL e o token do login no cabeçalho Authorization.",
+      "_type": "request",
+      "name": "01 · Consultar link da conta",
+      "description": "Faça login como proprietário e crie um link da conta antes de consultar.",
+      "url": "{{ _.base_url }}/api/url/{{ _.owner_code }}",
       "method": "GET",
       "body": {},
       "parameters": [],
@@ -523,36 +420,27 @@
         {
           "name": "Accept",
           "value": "application/json"
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer COLE_O_TOKEN_DO_LOGIN_AQUI"
         }
       ],
       "authentication": {},
+      "metaSortKey": 100,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
       "scripts": {
-        "afterResponse": "const body = JSON.parse(insomnia.response.text());\n\ninsomnia.test('responde HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\ninsomnia.test('retorna os campos de estatísticas da URL', () => {\n  insomnia.expect(body).to.have.all.keys('date', 'clickCount', 'urlOriginal');\n  insomnia.expect(body.date).to.be.a('string');\n  insomnia.expect(body.date).to.include('T');\n  insomnia.expect(body.clickCount).to.be.a('number');\n  insomnia.expect(body.clickCount).to.be.at.least(0);\n  insomnia.expect(body.urlOriginal).to.eql('https://example.com/minha-pagina');\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": false,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
+        "afterResponse": "insomnia.test('Estatísticas do proprietário retornam 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\nif (insomnia.response.code === 200) {\n  const body = insomnia.response.json();\n  insomnia.test('retorna data, cliques e URL original', () => {\n    insomnia.expect(body.date).to.be.a('string');\n    insomnia.expect(body.clickCount).to.be.a('number').and.to.be.at.least(0);\n    insomnia.expect(body.urlOriginal).to.eql(insomnia.environment.get('original_url'));\n  });\n}"
+      }
     },
     {
-      "_id": "req_stats_missing",
+      "_id": "req_stats_without_token",
       "parentId": "fld_stats_tests",
-      "modified": 1791892800000,
-      "created": 1791892800000,
-      "url": "http://localhost:8080/api/url/codigo-inexistente-404",
-      "name": "03 - Consultar código inexistente com JWT (espera 404)",
-      "description": "Verifica a resposta de erro para um código que não está cadastrado após autenticação.",
+      "_type": "request",
+      "name": "02 · Consultar sem sessão",
+      "description": "Não envia cookies, mesmo que exista uma sessão no Insomnia.",
+      "url": "{{ _.base_url }}/api/url/{{ _.owner_code }}",
       "method": "GET",
       "body": {},
       "parameters": [],
@@ -560,52 +448,69 @@
         {
           "name": "Accept",
           "value": "application/json"
-        },
-        {
-          "name": "Authorization",
-          "value": "Bearer COLE_O_TOKEN_DO_LOGIN_AQUI"
         }
       ],
       "authentication": {},
+      "metaSortKey": 200,
+      "settingStoreCookies": false,
+      "settingSendCookies": false,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
       "scripts": {
-        "afterResponse": "const body = JSON.parse(insomnia.response.text());\n\ninsomnia.test('responde HTTP 404', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});\n\ninsomnia.test('retorna o formato esperado de erro', () => {\n  insomnia.expect(body).to.have.all.keys('timestamp', 'status', 'error', 'path', 'errors');\n  insomnia.expect(body.status).to.eql(404);\n  insomnia.expect(body.path).to.eql('/api/url/codigo-inexistente-404');\n  insomnia.expect(body.errors).to.be.an('array').that.is.not.empty;\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": false,
-        "cookies": {
-          "send": true,
-          "store": true
+        "afterResponse": "insomnia.test('Estatísticas sem sessão retornam 401', () => {\n  insomnia.expect(insomnia.response.code).to.eql(401);\n});"
+      }
+    },
+    {
+      "_id": "req_stats_anonymous",
+      "parentId": "fld_stats_tests",
+      "_type": "request",
+      "name": "03 · Consultar link anônimo com sessão",
+      "description": "Após criar o link anônimo e entrar em uma conta, a consulta deve retornar 404.",
+      "url": "{{ _.base_url }}/api/url/{{ _.anonymous_code }}",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
         }
-      },
-      "_type": "request"
+      ],
+      "authentication": {},
+      "metaSortKey": 300,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
+      "scripts": {
+        "afterResponse": "insomnia.test('Estatísticas de link anônimo não são acessíveis à conta', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});"
+      }
     },
     {
       "_id": "fld_idor_tests",
       "parentId": "wrk_urlshortener_tests",
-      "modified": 1792604987000,
-      "created": 1792604987000,
-      "name": "IDOR - acesso a link de outro usuário",
-      "description": "Execute na ordem: crie um link, faça login como idor.other@example.com e consulte as estatísticas usando o código gerado. Senha da conta de teste: IdorTest123!. A consulta deve retornar 403 ou 404. Hoje a API retorna 200 porque ainda não associa links a proprietários; o teste deve falhar e evidenciar esse acesso.",
+      "_type": "request_group",
+      "name": "06 · Acesso entre contas",
+      "description": "Faça login como proprietário e crie um link da conta. Depois, execute as requisições deste grupo. A conta other_email precisa ser diferente; o padrão é a conta de teste da migração V2.",
       "environment": {},
       "environmentPropertyOrder": null,
-      "metaSortKey": 1792604988000,
-      "_type": "request_group"
+      "metaSortKey": 600
     },
     {
-      "_id": "req_idor_create_owner_url",
+      "_id": "req_idor_login_other",
       "parentId": "fld_idor_tests",
-      "modified": 1792604987000,
-      "created": 1792604987000,
-      "url": "http://localhost:8080/shorten",
-      "name": "01 - Criar o link usado no cenário",
-      "description": "Crie um link e copie o código curto da resposta para a requisição de consulta no final deste grupo.",
+      "_type": "request",
+      "name": "01 · Entrar em outra conta",
+      "description": "Troca o cookie pela conta other_email. A migração V2 inclui idor.other@example.com para testes locais; se necessário configure outra conta de teste no ambiente.",
+      "url": "{{ _.base_url }}/login",
       "method": "POST",
       "body": {
         "mimeType": "application/json",
-        "text": "{\n  \"url\": \"https://example.com/recurso-da-conta-dona\"\n}"
+        "text": "{\n  \"email\": \"{{ _.other_email }}\",\n  \"password\": \"{{ _.other_password }}\"\n}"
       },
       "parameters": [],
       "headers": [
@@ -619,65 +524,24 @@
         }
       ],
       "authentication": {},
+      "metaSortKey": 100,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
       "scripts": {
-        "afterResponse": "const body = JSON.parse(insomnia.response.text());\n\ninsomnia.test('cria o link com HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('retorna uma URL curta com código', () => {\n  insomnia.expect(body.response).to.match(/^https?:\\/\\/[^/]+\\/[a-zA-Z0-9]{6}$/);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": false,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
-    },
-    {
-      "_id": "req_idor_login_other",
-      "parentId": "fld_idor_tests",
-      "modified": 1792604987000,
-      "created": 1792604987000,
-      "url": "http://localhost:8080/login",
-      "name": "02 - Login como outro usuário",
-      "description": "Troca o cookie JWT pela conta diferente da proprietária do link.",
-      "method": "POST",
-      "body": {
-        "mimeType": "application/json",
-        "text": "{\n  \"email\": \"idor.other@example.com\",\n  \"password\": \"IdorTest123!\"\n}"
-      },
-      "parameters": [],
-      "headers": [
-        {
-          "name": "Content-Type",
-          "value": "application/json"
-        }
-      ],
-      "authentication": {},
-      "scripts": {
-        "afterResponse": "insomnia.test('login do outro usuário responde HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": false,
-        "cookies": {
-          "send": true,
-          "store": true
-        }
-      },
-      "_type": "request"
+        "afterResponse": "insomnia.test('Login da outra conta retorna 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});"
+      }
     },
     {
       "_id": "req_idor_cross_user_stats",
       "parentId": "fld_idor_tests",
-      "modified": 1792604987000,
-      "created": 1792604987000,
-      "url": "http://localhost:8080/api/url/COLE_O_CODIGO_DA_REQUISICAO_01",
-      "name": "03 - Outro usuário consulta o link (espera 403 ou 404)",
-      "description": "Após o login da conta de teste, substitua o marcador pelo código retornado na requisição 01. O Insomnia envia o cookie JWT do outro usuário. HTTP 200 confirma que ele conseguiu ler as estatísticas do recurso.",
+      "_type": "request",
+      "name": "02 · Consultar link de outra conta",
+      "description": "Com o cookie da outra conta, o código criado pelo proprietário deve retornar 404.",
+      "url": "{{ _.base_url }}/api/url/{{ _.owner_code }}",
       "method": "GET",
       "body": {},
       "parameters": [],
@@ -688,20 +552,44 @@
         }
       ],
       "authentication": {},
+      "metaSortKey": 200,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
       "scripts": {
-        "afterResponse": "insomnia.test('bloqueia acesso ao link pertencente a outro usuário', () => {\n  insomnia.expect([403, 404]).to.include(insomnia.response.code);\n});"
-      },
-      "settings": {
-        "renderRequestBody": true,
-        "encodeUrl": true,
-        "rebuildPath": true,
-        "followRedirects": false,
-        "cookies": {
-          "send": true,
-          "store": true
+        "afterResponse": "insomnia.test('Outra conta não acessa as estatísticas do proprietário', () => {\n  insomnia.expect(insomnia.response.code).to.eql(404);\n});"
+      }
+    },
+    {
+      "_id": "req_idor_cross_user_history",
+      "parentId": "fld_idor_tests",
+      "_type": "request",
+      "name": "03 · Verificar histórico de outra conta",
+      "description": "O histórico da outra conta não pode incluir o link do proprietário nem o link anônimo.",
+      "url": "{{ _.base_url }}/api/urls",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
         }
-      },
-      "_type": "request"
+      ],
+      "authentication": {},
+      "metaSortKey": 300,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "on",
+      "scripts": {
+        "afterResponse": "insomnia.test('Histórico da outra conta retorna 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});\n\nif (insomnia.response.code === 200) {\n  const links = insomnia.response.json();\n  const ownerCode = insomnia.environment.get('owner_code');\n  const anonymousCode = insomnia.environment.get('anonymous_code');\n  insomnia.test('exclui links do proprietário e anônimos', () => {\n    insomnia.expect(ownerCode).to.be.a('string').and.not.empty;\n    insomnia.expect(anonymousCode).to.be.a('string').and.not.empty;\n    insomnia.expect(links).to.be.an('array');\n    insomnia.expect(links.some(link => link.code === ownerCode)).to.eql(false);\n    insomnia.expect(links.some(link => link.code === anonymousCode)).to.eql(false);\n  });\n}"
+      }
     }
   ]
 }

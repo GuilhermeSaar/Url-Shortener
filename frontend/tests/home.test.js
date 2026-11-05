@@ -53,16 +53,19 @@ async function renderPage(url, authenticated = false) {
 test('home oferece o encurtador sem renderizar métricas ou histórico', async () => {
   const html = await renderPage('/')
   assert.match(html, /Encurtar link/)
-  assert.match(html, /Métricas/)
+  assert.match(html, /Meus links/)
   assert.doesNotMatch(html, /id="link-stats"/)
   assert.doesNotMatch(html, /Total de cliques/)
   assert.doesNotMatch(html, /id="history-drawer"/)
 })
 
-test('home autenticada mostra acesso ao histórico da conta', async () => {
+test('home autenticada abre a lista e o encurtador compacto', async () => {
   const html = await renderPage('/', true)
-  assert.match(html, /id="history-drawer"/)
-  assert.match(html, /Histórico/)
+  assert.match(html, /Seus links, à mão/)
+  assert.match(html, /Encurtar um novo link/)
+  assert.match(html, /Cliques acumulados/)
+  assert.doesNotMatch(html, /id="history-drawer"/)
+  assert.doesNotMatch(html, /class="link-capsule/)
 })
 
 test('visitante encontra login e cadastro ao acessar as métricas', async () => {
@@ -73,19 +76,36 @@ test('visitante encontra login e cadastro ao acessar as métricas', async () => 
   assert.doesNotMatch(html, /id="history-drawer"/)
 })
 
-test('a tela autenticada contém métricas e histórico, sem formulário de criação', async () => {
+test('endereço antigo de métricas abre a lista de links', async () => {
   const html = await renderPage('/stats', true)
-  assert.match(html, /Cada clique conta/)
-  assert.match(html, /Nenhum link selecionado/)
-  assert.match(html, /Total de cliques/)
-  assert.match(html, /id="history-drawer"/)
-  assert.doesNotMatch(html, /class="link-capsule/)
+  assert.match(html, /Meus links/)
+  assert.match(html, /Mais recentes primeiro/)
+  assert.match(html, /Buscando seus links/)
+  assert.doesNotMatch(html, /Nenhum link selecionado/)
+  assert.doesNotMatch(html, /id="history-drawer"/)
 })
 
-test('código vazio ou inválido recebe tratamento na tela de métricas', async () => {
-  const empty = await renderPage('/stats?code=', true)
-  assert.match(empty, /Nenhum link selecionado/)
+test('código inválido recebe tratamento na página de links', async () => {
   const invalid = await renderPage('/stats?code=a%2Fb', true)
-  assert.match(invalid, /Informe um código válido/)
-  assert.match(invalid, /Nenhum link selecionado/)
+  assert.match(invalid, /O código informado é inválido/)
+})
+
+test('a lista apresenta os dados do servidor e expande detalhes no mesmo link', async () => {
+  const LinkList = (await vite.ssrLoadModule('/src/components/LinkList.vue')).default
+  const link = { code: 'abc123', shortUrl: 'https://short.example/api/abc123', originalUrl: 'https://example.com/article', createdAt: '2026-10-19T12:00:00', clickCount: 42 }
+  const html = await renderToString(createSSRApp(LinkList, { links: [link], selectedCode: link.code, createdCode: link.code }))
+  assert.match(html, /https:\/\/short.example\/api\/abc123/)
+  assert.match(html, /https:\/\/example.com\/article/)
+  assert.match(html, /Novo/)
+  assert.match(html, /aria-expanded="true"/)
+  assert.match(html, /id="details-abc123"/)
+  assert.match(html, /Total de cliques/)
+  assert.match(html, />42</)
+  const collapsed = await renderToString(createSSRApp(LinkList, { links: [link] }))
+  assert.match(collapsed, /aria-expanded="false"/)
+  assert.doesNotMatch(collapsed, /id="details-abc123"/)
+  assert.doesNotMatch(collapsed, /https:\/\/example.com\/article/)
+  assert.doesNotMatch(collapsed, /Criado em|Total de cliques|>42</)
+  const details = html.slice(html.indexOf('<section id="details-abc123"'))
+  assert.doesNotMatch(details, /https:\/\/short.example\/api\/abc123/)
 })

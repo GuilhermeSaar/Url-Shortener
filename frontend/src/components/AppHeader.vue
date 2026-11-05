@@ -1,6 +1,6 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
-import { BarChart3, Link2, LogIn, LogOut, Plus } from 'lucide-vue-next'
+import { Link2, LogIn, LogOut } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth.js'
 
 const route = useRoute()
@@ -23,8 +23,7 @@ async function signOut() {
       <span>GS<span class="brand-dot">.</span></span>
     </RouterLink>
     <nav class="workspace-account" aria-label="Navegação principal">
-      <RouterLink v-if="route.name !== 'home'" :to="{ name: 'home' }" class="account-button"><Plus :size="14" /> Encurtar link</RouterLink>
-      <RouterLink v-if="route.name === 'home'" :to="{ name: 'stats' }" class="account-button"><BarChart3 :size="14" /> Métricas</RouterLink>
+      <RouterLink v-if="auth.isAuthenticated || route.name === 'home'" :to="{ name: 'links' }" class="account-button" :class="{ 'account-button-active': route.name === 'links' }"><Link2 :size="14" /> Meus links</RouterLink>
       <template v-if="auth.isAuthenticated">
         <span class="workspace-label"><span class="is-authenticated" /> Sessão ativa</span>
         <button type="button" class="account-button" @click="signOut"><LogOut :size="14" /> Sair</button>

@@ -198,9 +198,9 @@ Exemplo de corpo da resposta:
 
 Entradas inválidas retornam `400`, códigos inexistentes retornam `404` e e-mails já cadastrados retornam `409`. A consulta de estatísticas sem autenticação retorna `401`.
 
-Atualmente, links são criados sem vínculo com o usuário e qualquer usuário autenticado pode consultar as estatísticas de um código existente. A autorização por proprietário faz parte dos próximos passos.
+Links criados com uma sessão válida são associados à conta; links criados sem login são anônimos. O histórico e as estatísticas exigem autenticação, e as estatísticas só estão disponíveis ao proprietário.
 
-A [coleção do Insomnia](insomnia/url-shortener-insomnia.json) reúne exemplos de criação, validação, redirecionamento, cadastro, login e estatísticas autenticadas.
+A [coleção do Insomnia](insomnia/url-shortener-insomnia.json) reúne cadastro, sessão, criação de links, redirecionamento, histórico e estatísticas. Após importar, ajuste as variáveis do ambiente e use **Entrar** para armazenar o cookie `accessToken`. As criações preenchem `owner_code` e `anonymous_code` para as consultas; o grupo de acesso entre contas usa uma segunda conta de teste. As requisições públicas estão configuradas para não enviar cookies e o redirecionamento está configurado para mostrar a resposta `302`.
 
 ## Testes e desempenho
 

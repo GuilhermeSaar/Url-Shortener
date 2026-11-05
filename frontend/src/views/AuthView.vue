@@ -40,13 +40,13 @@ async function submit() {
     if (isLogin()) {
       await auth.signIn(email.value.trim(), password.value)
       password.value = ''
-      await router.replace({ name: 'stats', query: route.query })
+      await router.replace({ name: 'links', query: route.query })
       return
     }
     await auth.signUp(email.value.trim(), password.value)
     mode.value = 'login'
     password.value = ''
-    notice.value = 'Cadastro concluído. Entre para consultar as estatísticas.'
+    notice.value = 'Cadastro concluído. Entre para criar e acompanhar seus links.'
     await nextTick()
     emailInput.value?.focus()
   } catch (cause) {
@@ -64,10 +64,10 @@ onMounted(() => emailInput.value?.focus())
     <section class="auth-card" aria-labelledby="auth-title">
     <form class="auth-form" :aria-busy="loading" @submit.prevent="submit">
       <div class="auth-heading">
-        <div><span class="auth-eyebrow"><KeyRound :size="13" /> SUAS MÉTRICAS</span><h1 id="auth-title">{{ isLogin() ? 'Que bom ver você' : 'Vamos começar' }}<span class="brand-dot">.</span></h1></div>
+        <div><span class="auth-eyebrow"><KeyRound :size="13" /> SEUS LINKS</span><h1 id="auth-title">{{ isLogin() ? 'Que bom ver você' : 'Vamos começar' }}<span class="brand-dot">.</span></h1></div>
       </div>
 
-      <p class="auth-description">{{ isLogin() ? 'Entre para acompanhar os cliques dos seus links.' : 'Crie uma conta para acessar as métricas dos links.' }}</p>
+      <p class="auth-description">{{ isLogin() ? 'Entre para criar, compartilhar e acompanhar seus links.' : 'Crie uma conta para guardar seus links e acompanhar os cliques.' }}</p>
       <label class="auth-field" for="auth-email">E-mail<input id="auth-email" ref="emailInput" v-model="email" type="email" autocomplete="email" inputmode="email" required :readonly="loading" /></label>
       <label class="auth-field" for="auth-password">Senha<input id="auth-password" v-model="password" type="password" :autocomplete="isLogin() ? 'current-password' : 'new-password'" :minlength="isLogin() ? undefined : 8" required :readonly="loading" /></label>
       <p v-if="error" class="auth-error" role="alert">{{ error }}</p>

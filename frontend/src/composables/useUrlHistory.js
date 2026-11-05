@@ -7,6 +7,7 @@ export function useUrlHistory({ onSessionExpired } = {}) {
   const links = ref([])
   const loading = ref(false)
   const error = ref('')
+  const hasLoaded = ref(false)
   let controller
   let disposed = false
 
@@ -15,17 +16,22 @@ export function useUrlHistory({ onSessionExpired } = {}) {
     links.value = []
     loading.value = false
     error.value = ''
+    hasLoaded.value = false
   }
 
   async function load() {
-    clear()
-    if (!auth.isAuthenticated) return
+    controller?.abort()
+    if (!auth.isAuthenticated || disposed) { clear(); return }
     const request = new AbortController()
     controller = request
     loading.value = true
+    error.value = ''
     try {
       const result = await getUrlHistory(request.signal)
-      if (!request.signal.aborted && auth.isAuthenticated) links.value = result
+      if (!request.signal.aborted && auth.isAuthenticated) {
+        links.value = [...result].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+        hasLoaded.value = true
+      }
     } catch (cause) {
       if (request.signal.aborted) return
       if (cause?.response?.status === 401) {
@@ -46,5 +52,5 @@ export function useUrlHistory({ onSessionExpired } = {}) {
   onMounted(() => { if (auth.isAuthenticated) load() })
   onUnmounted(() => { disposed = true; clear() })
 
-  return { links, loading, error, load }
+  return { links, loading, error, hasLoaded, load }
 }

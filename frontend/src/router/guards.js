@@ -6,8 +6,8 @@ export function authenticationGuard(to, pinia) {
     if (to.meta.requiresAuth && !auth.isAuthenticated) {
       return { name: 'login', query: to.query, replace: true }
     }
-    if (to.name === 'login' && auth.isAuthenticated) {
-      return { name: 'stats', query: to.query, replace: true }
+    if ((to.name === 'login' || to.name === 'home') && auth.isAuthenticated) {
+      return { name: 'links', query: to.query, replace: true }
     }
   })
 }

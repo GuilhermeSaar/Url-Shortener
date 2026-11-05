@@ -1,19 +1,10 @@
 <script setup>
 import { nextTick, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { ArrowRight, ArrowUpRight, BarChart3, Check, CornerDownLeft, ExternalLink, GalleryVerticalEnd, Link2, LoaderCircle, LockKeyhole, Plus, X } from 'lucide-vue-next'
+import { ArrowRight, ArrowUpRight, Check, CornerDownLeft, ExternalLink, Link2, LoaderCircle, LockKeyhole, Plus, X } from 'lucide-vue-next'
 import CopyButton from '../components/CopyButton.vue'
-import HistoryDrawer from '../components/HistoryDrawer.vue'
-import { useUrlHistory } from '../composables/useUrlHistory'
-import { useAuthStore } from '../stores/auth'
 import { errorMessage, shortenUrl } from '../services/api'
 import { extractCode, isHttpUrl } from '../utils/links'
 
-const router = useRouter()
-const auth = useAuthStore()
-const { links, loading: historyLoading, error: historyError, load: loadHistory } = useUrlHistory()
-const drawer = ref(null)
-const historyOpen = ref(false)
 const expanded = ref(false)
 const url = ref('')
 const loading = ref(false)
@@ -63,7 +54,6 @@ async function submit() {
     const link = { shortUrl: data.response, originalUrl, code: extractCode(data.response), createdAt: new Date().toISOString() }
     if (active) {
       result.value = link
-      if (auth.isAuthenticated) loadHistory()
       await nextTick()
       resultPanel.value?.focus()
     }
@@ -122,7 +112,6 @@ onUnmounted(() => {
                   <p class="result-original" :title="result.originalUrl">{{ result.originalUrl }}</p>
                   <div class="capsule-bottom result-bottom">
                     <button type="button" class="new-link-button" @click="startAnother"><Plus :size="14" /> Encurtar outro</button>
-                    <RouterLink v-if="auth.isAuthenticated" :to="{ name: 'stats', query: { code: result.code } }" class="result-stats" aria-label="Ver métricas deste link"><BarChart3 :size="15" /><span>Ver métricas</span></RouterLink>
                     <span class="keyboard-hint"><kbd>espaço</kbd> para copiar</span>
                   </div>
                 </div>
@@ -148,12 +137,6 @@ onUnmounted(() => {
           </div>
           <p class="workspace-tip"><Link2 :size="14" /> Menos caracteres. O mesmo destino.</p>
         </section>
-      <p class="workspace-footnote"><LockKeyhole :size="12" /> Quer acompanhar os cliques? Entre ou crie uma conta para ver as métricas.</p>
+      <p class="workspace-footnote"><LockKeyhole :size="12" /> Entre antes de criar para guardar seus links e acompanhar os cliques.</p>
     </div>
-    <template v-if="auth.isAuthenticated">
-      <button type="button" class="history-trigger" aria-haspopup="dialog" :aria-expanded="historyOpen" aria-controls="history-drawer" @click="drawer.open()">
-        <GalleryVerticalEnd :size="18" /><span>Histórico</span><span v-if="links.length" class="history-count">{{ links.length }}</span>
-      </button>
-      <HistoryDrawer ref="drawer" :links="links" :loading="historyLoading" :error="historyError" @toggle="historyOpen = $event" @create="startAnother" @inspect="router.push({ name: 'stats', query: { code: $event.code } })" @retry="loadHistory" />
-    </template>
 </template>

@@ -1,10 +1,10 @@
 package com.urlshortener.shared.exception.handler;
 
 import com.urlshortener.shared.exception.ResourceNotFound;
-import com.urlshortener.user.exception.FailedRetrieveAuthenticatedException;
-import com.urlshortener.user.exception.EmailAlreadyExistException;
 import com.urlshortener.shared.exception.dto.FieldErrors;
 import com.urlshortener.shared.exception.dto.ResponseError;
+import com.urlshortener.user.exception.EmailAlreadyExistException;
+import com.urlshortener.user.exception.FailedRetrieveAuthenticatedException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

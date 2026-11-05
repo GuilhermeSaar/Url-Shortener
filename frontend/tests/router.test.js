@@ -59,7 +59,7 @@ test('endereços antigos chegam às métricas e também respeitam a autenticaç�
   }
   const { router } = createTestRouter(true)
   await router.push('/stats/aB3xYz')
-  assert.equal(router.currentRoute.value.name, 'stats')
+  assert.equal(router.currentRoute.value.name, 'links')
   assert.equal(router.currentRoute.value.query.code, 'aB3xYz')
 })
 
@@ -67,9 +67,9 @@ test('usuário autenticado acessa as métricas e muda o código na mesma tela', 
   const { router } = createTestRouter(true)
   await router.push('/stats')
   const workspace = router.currentRoute.value.matched[0]
-  await router.replace({ name: 'stats', query: { code: 'first' } })
-  await router.replace({ name: 'stats', query: { code: 'second' } })
-  assert.equal(router.currentRoute.value.name, 'stats')
+  await router.replace({ name: 'links', query: { code: 'first' } })
+  await router.replace({ name: 'links', query: { code: 'second' } })
+  assert.equal(router.currentRoute.value.name, 'links')
   assert.equal(router.currentRoute.value.matched[0], workspace)
   assert.equal(router.currentRoute.value.query.code, 'second')
   assert.equal(router.options.history.state.back, undefined)
@@ -86,16 +86,24 @@ test('sair bloqueia novo acesso às métricas, inclusive pelo histórico de nave
   assert.equal(router.currentRoute.value.query.code, 'aB3xYz')
 })
 
-test('usuário autenticado pula o login preservando a seleção', async () => {
+test('usuário autenticado chega à lista após login preservando a seleção', async () => {
   const { router } = createTestRouter(true)
   await router.push('/entrar?code=aB3xYz')
-  assert.equal(router.currentRoute.value.name, 'stats')
+  assert.equal(router.currentRoute.value.name, 'links')
   assert.equal(router.currentRoute.value.query.code, 'aB3xYz')
 })
 
 test('trocar o código mantém a rolagem e trocar a tela volta ao topo', () => {
-  assert.equal(scrollBehavior({ path: '/stats', hash: '' }, { path: '/stats' }), false)
-  assert.deepEqual(scrollBehavior({ path: '/stats', hash: '' }, { path: '/' }), { top: 0 })
+  assert.equal(scrollBehavior({ path: '/meus-links', hash: '' }, { path: '/meus-links' }), false)
+  assert.deepEqual(scrollBehavior({ path: '/meus-links', hash: '' }, { path: '/' }), { top: 0 })
   const position = { left: 0, top: 240 }
-  assert.equal(scrollBehavior({ path: '/stats' }, { path: '/stats' }, position), position)
+  assert.equal(scrollBehavior({ path: '/meus-links' }, { path: '/meus-links' }, position), position)
+})
+
+
+test('a página inicial autenticada abre Meus links automaticamente', async () => {
+  const { router } = createTestRouter(true)
+  await router.push('/')
+  assert.equal(router.currentRoute.value.name, 'links')
+  assert.equal(router.currentRoute.value.path, '/meus-links')
 })

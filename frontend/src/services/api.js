@@ -28,8 +28,8 @@ export async function logout() {
   await api.post('/logout')
 }
 
-export async function shortenUrl(url) {
-  const { data } = await api.post('/api/shorten', { url })
+export async function shortenUrl(url, signal) {
+  const { data } = await api.post('/api/shorten', { url }, { signal })
   if (!isHttpUrl(data?.response)) throw new InvalidApiResponse()
   try {
     extractCode(data.response)
