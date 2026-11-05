@@ -1,10 +1,12 @@
 package com.urlshortener.service;
 
+import com.urlshortener.shared.exception.ResourceNotFound;
 import com.urlshortener.url.dto.UrlStatsResponse;
-import com.urlshortener.url.exception.UrlNotFoundException;
 import com.urlshortener.url.model.UrlModel;
 import com.urlshortener.url.repository.UrlRepository;
 import com.urlshortener.url.service.UrlService;
+import com.urlshortener.user.model.UserModel;
+import com.urlshortener.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +28,8 @@ public class UrlServiceTest {
     private UrlRepository repository;
     @Mock
     private Sqids sqids;
+    @Mock
+    private UserRepository userRepository;
     @InjectMocks
     private UrlService urlService;
 
@@ -33,11 +37,11 @@ public class UrlServiceTest {
     void ShouldThrowExceptionWhenUrlIsNullOrBlank() {
 
         assertThrows(IllegalArgumentException.class, () -> {
-            urlService.createShortenUrl(null);
+            urlService.createShortenUrl(null, null);
         });
 
         assertThrows(IllegalArgumentException.class, () -> {
-            urlService.createShortenUrl(" ");
+            urlService.createShortenUrl(" ", null);
         });
 
         verifyNoInteractions(repository);
@@ -53,20 +57,42 @@ public class UrlServiceTest {
         when(repository.getNextSequenceId()).thenReturn(fakeId);
         when(sqids.encode(List.of(fakeId))).thenReturn(fakeCode);
 
-        var result =  urlService.createShortenUrl(longUrl);
+        var result =  urlService.createShortenUrl(longUrl, null);
 
         assertNotNull(result);
         assertEquals(fakeCode, result);
 
         verify(repository, times(1)).getNextSequenceId();
         verify(repository, times(1)).save(any(UrlModel.class));
+        verifyNoInteractions(userRepository);
+        var urlCaptor = org.mockito.ArgumentCaptor.forClass(UrlModel.class);
+        verify(repository).save(urlCaptor.capture());
+        assertNull(urlCaptor.getValue().getUser());
+    }
+
+    @Test
+    void shouldAssociateShortenedUrlWithAuthenticatedUser() {
+        var longUrl = "https://exemplo.com/pagina-da-conta";
+        var email = "owner@example.com";
+        var user = new UserModel();
+        user.setEmail(email);
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(repository.getNextSequenceId()).thenReturn(2L);
+        when(sqids.encode(List.of(2L))).thenReturn("k1sd5p");
+
+        urlService.createShortenUrl(longUrl, email);
+
+        var urlCaptor = org.mockito.ArgumentCaptor.forClass(UrlModel.class);
+        verify(repository).save(urlCaptor.capture());
+        assertSame(user, urlCaptor.getValue().getUser());
     }
 
     @Test
     void shouldReturnOriginalUrlAndIncrementClickCount() {
         var code = "k1sd5o";
         var originalUrl = "https://exemplo.com/pagina-original";
-        var urlModel = new UrlModel(1L, code, originalUrl);
+        var urlModel = new UrlModel(1L, code, originalUrl, null);
 
         when(repository.findByCode(code)).thenReturn(Optional.of(urlModel));
 
@@ -79,7 +105,7 @@ public class UrlServiceTest {
 
     @Test
     void shouldThrowWhenOriginalUrlCodeIsNull() {
-        assertThrows(UrlNotFoundException.class, () -> urlService.originalUrl(null));
+        assertThrows(ResourceNotFound.class, () -> urlService.originalUrl(null));
 
         verifyNoInteractions(repository);
     }
@@ -89,7 +115,7 @@ public class UrlServiceTest {
         var code = "inexistente";
         when(repository.findByCode(code)).thenReturn(Optional.empty());
 
-        assertThrows(UrlNotFoundException.class, () -> urlService.originalUrl(code));
+        assertThrows(ResourceNotFound.class, () -> urlService.originalUrl(code));
 
         verify(repository).findByCode(code);
         verify(repository, never()).incrementClickCount(anyString());
@@ -101,7 +127,7 @@ public class UrlServiceTest {
         var createdAt = LocalDateTime.of(2026, 10, 19, 12, 0);
         var originalUrl = "https://exemplo.com/pagina-original";
         var clickCount = 7L;
-        var urlModel = new UrlModel(1L, code, originalUrl);
+        var urlModel = new UrlModel(1L, code, originalUrl, null);
         urlModel.setCreatedAt(createdAt);
         urlModel.setClickCount(clickCount);
         when(repository.findByCode(code)).thenReturn(Optional.of(urlModel));
@@ -120,7 +146,7 @@ public class UrlServiceTest {
         var code = "inexistente";
         when(repository.findByCode(code)).thenReturn(Optional.empty());
 
-        assertThrows(UrlNotFoundException.class, () -> urlService.getUrlStats(code));
+        assertThrows(ResourceNotFound.class, () -> urlService.getUrlStats(code));
 
         verify(repository).findByCode(code);
     }

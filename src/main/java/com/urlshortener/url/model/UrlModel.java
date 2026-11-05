@@ -11,6 +11,7 @@ import org.springframework.data.domain.Persistable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -46,13 +47,15 @@ public class UrlModel implements Persistable<Long> {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public UrlModel(Long nextId, String code, String longUrl) {
+    public UrlModel(Long nextId, String code, String longUrl, UserModel user) {
         this.id = nextId;
         this.code = code;
         this.urlOriginal = longUrl;
         this.clickCount = 0L;
-        this.user = null;
+        this.user = user;
     }
+
+
 
     @PostPersist
     @PostLoad

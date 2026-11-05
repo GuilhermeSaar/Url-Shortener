@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -20,9 +21,13 @@ public class ShortenUrlController {
     private final UrlService service;
 
     @PostMapping(value = "/shorten")
-    public ResponseEntity<UrlResponse> shortenUrl(@Valid @RequestBody UrlRequest request) {
+    public ResponseEntity<UrlResponse> shortenUrl(@Valid @RequestBody UrlRequest request, Authentication authentication) {
 
-        String shortCode = service.createShortenUrl(request.url());
+        var userAuth = (authentication != null && authentication.isAuthenticated()
+            && !authentication.getPrincipal().equals("anonymousUser"))
+                ? authentication.getName() : null;
+
+        String shortCode = service.createShortenUrl(request.url(), userAuth);
         String longUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/{code}")
                 .buildAndExpand(shortCode)

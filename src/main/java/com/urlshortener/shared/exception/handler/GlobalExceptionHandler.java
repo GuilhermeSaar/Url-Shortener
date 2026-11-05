@@ -1,8 +1,8 @@
 package com.urlshortener.shared.exception.handler;
 
+import com.urlshortener.shared.exception.ResourceNotFound;
 import com.urlshortener.user.exception.FailedRetrieveAuthenticatedException;
 import com.urlshortener.user.exception.EmailAlreadyExistException;
-import com.urlshortener.url.exception.UrlNotFoundException;
 import com.urlshortener.shared.exception.dto.FieldErrors;
 import com.urlshortener.shared.exception.dto.ResponseError;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,8 +20,8 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({UrlNotFoundException.class})
-    public ResponseEntity<ResponseError> urlNotFoundException(UrlNotFoundException ex, HttpServletRequest request) {
+    @ExceptionHandler({ResourceNotFound.class})
+    public ResponseEntity<ResponseError> notFoundException(ResourceNotFound ex, HttpServletRequest request) {
 
         HttpStatus status = HttpStatus.NOT_FOUND;
 

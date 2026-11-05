@@ -581,6 +581,127 @@
         }
       },
       "_type": "request"
+    },
+    {
+      "_id": "fld_idor_tests",
+      "parentId": "wrk_urlshortener_tests",
+      "modified": 1792604987000,
+      "created": 1792604987000,
+      "name": "IDOR - acesso a link de outro usuário",
+      "description": "Execute na ordem: crie um link, faça login como idor.other@example.com e consulte as estatísticas usando o código gerado. Senha da conta de teste: IdorTest123!. A consulta deve retornar 403 ou 404. Hoje a API retorna 200 porque ainda não associa links a proprietários; o teste deve falhar e evidenciar esse acesso.",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1792604988000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_idor_create_owner_url",
+      "parentId": "fld_idor_tests",
+      "modified": 1792604987000,
+      "created": 1792604987000,
+      "url": "http://localhost:8080/shorten",
+      "name": "01 - Criar o link usado no cenário",
+      "description": "Crie um link e copie o código curto da resposta para a requisição de consulta no final deste grupo.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"url\": \"https://example.com/recurso-da-conta-dona\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "const body = JSON.parse(insomnia.response.text());\n\ninsomnia.test('cria o link com HTTP 201', () => {\n  insomnia.expect(insomnia.response.code).to.eql(201);\n});\n\ninsomnia.test('retorna uma URL curta com código', () => {\n  insomnia.expect(body.response).to.match(/^https?:\\/\\/[^/]+\\/[a-zA-Z0-9]{6}$/);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": false,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_idor_login_other",
+      "parentId": "fld_idor_tests",
+      "modified": 1792604987000,
+      "created": 1792604987000,
+      "url": "http://localhost:8080/login",
+      "name": "02 - Login como outro usuário",
+      "description": "Troca o cookie JWT pela conta diferente da proprietária do link.",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"idor.other@example.com\",\n  \"password\": \"IdorTest123!\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('login do outro usuário responde HTTP 200', () => {\n  insomnia.expect(insomnia.response.code).to.eql(200);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": false,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
+    },
+    {
+      "_id": "req_idor_cross_user_stats",
+      "parentId": "fld_idor_tests",
+      "modified": 1792604987000,
+      "created": 1792604987000,
+      "url": "http://localhost:8080/api/url/COLE_O_CODIGO_DA_REQUISICAO_01",
+      "name": "03 - Outro usuário consulta o link (espera 403 ou 404)",
+      "description": "Após o login da conta de teste, substitua o marcador pelo código retornado na requisição 01. O Insomnia envia o cookie JWT do outro usuário. HTTP 200 confirma que ele conseguiu ler as estatísticas do recurso.",
+      "method": "GET",
+      "body": {},
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "authentication": {},
+      "scripts": {
+        "afterResponse": "insomnia.test('bloqueia acesso ao link pertencente a outro usuário', () => {\n  insomnia.expect([403, 404]).to.include(insomnia.response.code);\n});"
+      },
+      "settings": {
+        "renderRequestBody": true,
+        "encodeUrl": true,
+        "rebuildPath": true,
+        "followRedirects": false,
+        "cookies": {
+          "send": true,
+          "store": true
+        }
+      },
+      "_type": "request"
     }
   ]
 }

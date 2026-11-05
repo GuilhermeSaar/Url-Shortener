@@ -2,7 +2,7 @@
 
 Aplicação web para transformar URLs longas em links curtos, redirecionar para o destino original e acompanhar a quantidade de acessos.
 
-> **Em desenvolvimento.** Projeto de portfólio com backend em Java e Spring Boot e frontend em Vue. A integração entre as funcionalidades está sendo construída; o estado atual e os próximos passos estão descritos abaixo.
+> **Em desenvolvimento.** Projeto com backend em Java e Spring Boot e frontend em Vue. A integração entre as funcionalidades está sendo construída; o estado atual e os próximos passos estão descritos abaixo.
 
 O projeto reúne estudos práticos de APIs REST, autenticação, persistência relacional, concorrência, testes automatizados e integração entre frontend e backend.
 

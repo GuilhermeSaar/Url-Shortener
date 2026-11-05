@@ -35,7 +35,7 @@ class ShortenUrlControllerTest {
     void shouldCreateShortUrlAndReturnCreated() throws Exception {
         var shortCode = "k1sd5o";
         var originalUrl = "https://www.google.com";
-        when(service.createShortenUrl(originalUrl)).thenReturn(shortCode);
+        when(service.createShortenUrl(originalUrl, null)).thenReturn(shortCode);
 
         mockMvc.perform(post("/shorten")
                         .contentType("application/json")
@@ -45,7 +45,7 @@ class ShortenUrlControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.response").value("http://localhost/" + shortCode));
 
-        verify(service).createShortenUrl(originalUrl);
+        verify(service).createShortenUrl(originalUrl, null);
     }
 
     @Test
